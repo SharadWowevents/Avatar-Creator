@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateAvatarApi } from '../api/avatarApi';
 
 export default function InputPage({ inputs, setInputs, setResultData, hasExistingResult }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('normal');
+
+  // Timer to track elapsed seconds and show estimated remaining time
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      setElapsedSeconds(0);
+      timer = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedSeconds(0);
+    }
+    return () => clearInterval(timer);
+  }, [loading]);
 
   const handleChange = (field, value) => {
     setInputs(prev => ({
@@ -38,7 +53,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
 
     setLoading(true);
     setStatusType('normal');
-    setStatus('Thinking… crafting your personas with OpenAI GPT-6 Luna.');
+    setStatus('');
 
     try {
       const result = await generateAvatarApi(inputs);
@@ -70,7 +85,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
           </p>
         </div>
 
-        {hasExistingResult && (
+        {hasExistingResult && !loading && (
           <button
             type="button"
             className="btn-subtle"
@@ -94,6 +109,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               placeholder="Describe who you are, what your business does, and the services or products you deliver..."
               value={inputs.intro}
               onChange={e => handleChange('intro', e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -107,6 +123,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               placeholder="Describe your ideal customer profile: target roles, company size, industry, and what they are evaluated on..."
               value={inputs.icp}
               onChange={e => handleChange('icp', e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -120,6 +137,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               placeholder="1. Urgent deadline or crisis scenario they face right now...&#10;2. High-friction pain point that puts their credibility on the line...&#10;3. Critical risk or budget limitation they cannot afford to compromise..."
               value={inputs.life}
               onChange={e => handleChange('life', e.target.value)}
+              disabled={loading}
             />
             <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
           </div>
@@ -134,6 +152,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               placeholder="1. High-level ambition, status, or market benchmark they want to reach...&#10;2. Streamlined partnership or scaling goal to replace fragmented efforts...&#10;3. Transformational outcome that creates long-term value and prestige..."
               value={inputs.yacht}
               onChange={e => handleChange('yacht', e.target.value)}
+              disabled={loading}
             />
             <p className="hint">When they're doing well: ambition, status, the next level.</p>
           </div>
@@ -148,6 +167,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               placeholder="How your business uniquely serves both emergency rescues and strategic partnerships..."
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -156,7 +176,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               {loading ? (
                 <>
                   <span className="dot" style={{ width: 6, height: 6 }} />
-                  Creating avatars…
+                  Creating avatars… ({elapsedSeconds}s)
                 </>
               ) : (
                 'Create avatars'
@@ -167,12 +187,45 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             </button>
           </div>
 
+          {/* Real-time Estimated Time & Progress feedback */}
+          {loading && (
+            <div className="estimate-box">
+              <div className="estimate-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="dot" />
+                  <span className="dot" />
+                  <strong style={{ color: 'var(--ink)' }}>Building your customer avatars…</strong>
+                </div>
+                <span className="estimate-time-badge">
+                  ⏱️ Estimated time: ~15–30s ({elapsedSeconds}s elapsed)
+                </span>
+              </div>
+
+              <div className="estimate-progress-bar">
+                <div
+                  className="estimate-progress-fill"
+                  style={{
+                    width: `${Math.min(96, Math.max(8, (elapsedSeconds / 24) * 100))}%`,
+                  }}
+                />
+              </div>
+
+              <p className="estimate-stage-text">
+                {elapsedSeconds < 6 && '🔍 Analyzing company profile & ICP distress signals…'}
+                {elapsedSeconds >= 6 && elapsedSeconds < 13 && '🐇 Crafting Lifeboat urgent emergency persona & pain points…'}
+                {elapsedSeconds >= 13 && elapsedSeconds < 21 && '🦅 Synthesizing Yacht transformative ambition & altitude…'}
+                {elapsedSeconds >= 21 && '🌉 Assembling Lifeboat → Yacht bridge journey roadmap…'}
+              </p>
+            </div>
+          )}
+
           {status && (
             <p
               className={`status ${
                 statusType === 'error' ? 'err' : statusType === 'success' ? 'success' : ''
               }`}
               role="status"
+              style={{ marginTop: '8px' }}
             >
               {status}
             </p>
