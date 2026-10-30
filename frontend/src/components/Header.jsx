@@ -19,10 +19,7 @@ export default function Header({
           <Link to={isAuthenticated ? '/' : '/login'} style={{ textDecoration: 'none', color: 'inherit' }}>
             <h1>Customer Avatar Creator</h1>
           </Link>
-          <p className="sub">
-            Describe your business and the two situations your buyers arrive in.
-            Get back two animal-character avatars and a plan to serve both.
-          </p>
+          
         </div>
 
         <div className="header-actions">

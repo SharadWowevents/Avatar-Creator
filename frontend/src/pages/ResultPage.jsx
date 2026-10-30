@@ -75,8 +75,7 @@ export default function ResultPage({ data, inputs, onRefreshSaved }) {
     );
   }
 
-  const isExample = inputs?.intro?.toLowerCase().includes('wow');
-  const dossierTitle = isExample ? 'EXAMPLE · WOW EVENTS' : 'YOUR AVATAR DOSSIER';
+  const dossierTitle = data?.title || 'CUSTOMER AVATAR DOSSIER';
 
   return (
     <div className="result-page-container">

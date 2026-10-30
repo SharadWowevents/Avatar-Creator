@@ -22,23 +22,31 @@ function MainApp() {
     return localStorage.getItem('cac-theme') || 'light';
   });
 
-  // Inputs state
+  // Inputs state - starts completely blank
   const [inputs, setInputs] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('cac-inputs') || 'null');
+      if (saved && saved.intro && saved.intro.includes('WOW Events')) {
+        localStorage.removeItem('cac-inputs');
+        return EX_IN;
+      }
       return saved || EX_IN;
     } catch {
       return EX_IN;
     }
   });
 
-  // Result Dossier state
+  // Result Dossier state - starts empty (null) until user generates
   const [data, setData] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('cac-output') || 'null');
-      return (saved && saved.lifeboat) ? saved : EX_OUT;
+      if (saved && saved.lifeboat && saved.lifeboat.characterName?.includes('Rescue Rhea')) {
+        localStorage.removeItem('cac-output');
+        return null;
+      }
+      return (saved && saved.lifeboat) ? saved : null;
     } catch {
-      return EX_OUT;
+      return null;
     }
   });
 

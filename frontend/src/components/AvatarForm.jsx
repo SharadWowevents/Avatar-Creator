@@ -1,5 +1,4 @@
 import React from 'react';
-import { EX_IN } from '../data/defaultData';
 
 export default function AvatarForm({
   inputs,
@@ -17,10 +16,6 @@ export default function AvatarForm({
     }));
   };
 
-  const handleLoadExample = () => {
-    setInputs(EX_IN);
-  };
-
   return (
     <section className="panel" aria-label="Your inputs">
       <form onSubmit={onSubmit}>
@@ -31,7 +26,7 @@ export default function AvatarForm({
           <textarea
             id="intro"
             rows={3}
-            placeholder="e.g. WOW Events is an experience design agency..."
+            placeholder="Describe who you are, what your business does, and the services or products you deliver..."
             value={inputs.intro}
             onChange={e => handleChange('intro', e.target.value)}
           />
@@ -44,7 +39,7 @@ export default function AvatarForm({
           <textarea
             id="icp"
             rows={3}
-            placeholder="e.g. Marketing heads at ₹50 Cr+ companies..."
+            placeholder="Describe your ideal customer profile: target roles, company size, industry, and what they are evaluated on..."
             value={inputs.icp}
             onChange={e => handleChange('icp', e.target.value)}
           />
@@ -57,7 +52,7 @@ export default function AvatarForm({
           <textarea
             id="life"
             rows={4}
-            placeholder="1. Event is 2-3 weeks away and vendor dropped the ball..."
+            placeholder="1. Urgent deadline or crisis scenario they face right now...&#10;2. High-friction pain point that puts their credibility on the line...&#10;3. Critical risk or budget limitation they cannot afford to compromise..."
             value={inputs.life}
             onChange={e => handleChange('life', e.target.value)}
           />
@@ -71,7 +66,7 @@ export default function AvatarForm({
           <textarea
             id="yacht"
             rows={4}
-            placeholder="1. Want annual flagship event to set new benchmark..."
+            placeholder="1. High-level ambition, status, or market benchmark they want to reach...&#10;2. Streamlined partnership or scaling goal to replace fragmented efforts...&#10;3. Transformational outcome that creates long-term value and prestige..."
             value={inputs.yacht}
             onChange={e => handleChange('yacht', e.target.value)}
           />
@@ -85,7 +80,7 @@ export default function AvatarForm({
           <textarea
             id="both"
             rows={3}
-            placeholder="e.g. For Lifeboats we rapid-rescue in 48 hours; for Yachts we deliver annual partnerships..."
+            placeholder="How your business uniquely serves both emergency rescues and strategic partnerships..."
             value={inputs.both}
             onChange={e => handleChange('both', e.target.value)}
           />
@@ -94,9 +89,6 @@ export default function AvatarForm({
         <div className="actions">
           <button type="submit" className="primary" disabled={loading}>
             {loading ? 'Building avatars…' : 'Create avatars'}
-          </button>
-          <button type="button" onClick={handleLoadExample} disabled={loading} title="Fill WOW Events preset">
-            Load Example
           </button>
           <button type="button" onClick={onClear} disabled={loading}>
             Clear
@@ -115,4 +107,3 @@ export default function AvatarForm({
     </section>
   );
 }
-

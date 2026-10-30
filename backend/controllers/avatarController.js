@@ -1,25 +1,9 @@
 const Avatar = require('../models/Avatar');
 const { getStatus } = require('../config/db');
-const { generateAvatars, WOW_EXAMPLE_OUT } = require('../services/aiService');
+const { generateAvatars } = require('../services/aiService');
 
-// Fallback in-memory store when MongoDB is disconnected
-let memoryStore = [
-  {
-    _id: "example-wow-events",
-    title: "WOW Events - Rhea & Vikram",
-    inputs: {
-      intro: "WOW Events Pvt. Ltd. is an events and experience design agency in India. We concept, design and produce brand launches, dealer meets, conferences and offsites that people talk about long after.",
-      icp: "Marketing heads, brand managers and founders at mid-to-large Indian companies (₹50 Cr+ revenue) who run 3–10 corporate events a year and are judged on how those events land with leadership, dealers and customers.",
-      life: "1. Event is 2–3 weeks away and the current vendor has dropped the ball or gone silent.\n2. Leadership is unhappy with last year's 'same old' event and the marketing head's credibility is on the line.\n3. Budget is fixed and tight, and they can't afford overruns or surprises.",
-      yacht: "1. They want their annual flagship event to set a new benchmark in their industry.\n2. They want one trusted partner across the year instead of juggling many vendors.\n3. They want events that create content, PR buzz and measurable brand impact.",
-      both: "For Lifeboat clients we step in fast with a rapid-rescue team, a fixed-scope plan in 48 hours and daily updates. For Yacht clients we offer an annual experience partnership with concept labs, design-led themes and post-event impact reports. Lifeboat wins become Yacht retainers."
-    },
-    output: WOW_EXAMPLE_OUT,
-    isExample: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
+// In-memory store when MongoDB is offline (starts clean without demo records)
+let memoryStore = [];
 
 /**
  * Generate Avatar Dossier

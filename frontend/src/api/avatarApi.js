@@ -1,5 +1,3 @@
-import { EX_OUT } from '../data/defaultData';
-
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 function getAuthHeaders() {
@@ -41,15 +39,9 @@ export async function generateAvatarApi(inputs) {
     }
     return data.data;
   } catch (err) {
-    console.warn('API generate failed or backend offline. Falling back to local persona engine:', err);
-    
-    // If input is WOW Events or matches keywords
-    const text = `${inputs.intro || ''} ${inputs.icp || ''}`.toLowerCase();
-    if (text.includes('wow') || text.includes('event')) {
-      return EX_OUT;
-    }
+    console.warn('API generate failed or backend offline. Falling back to dynamic persona engine:', err);
 
-    // Heuristic client fallback
+    // Heuristic client fallback derived dynamically from user inputs
     const brandName = (inputs.intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates)|\b)/i) || [])[1] || 'Your business';
     return {
       lifeboat: {

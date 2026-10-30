@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EX_IN } from '../data/defaultData';
 import { generateAvatarApi } from '../api/avatarApi';
 
 export default function InputPage({ inputs, setInputs, setResultData, hasExistingResult }) {
@@ -16,13 +15,6 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
     }));
   };
 
-  const handleLoadExample = () => {
-    setInputs(EX_IN);
-    setStatusType('success');
-    setStatus('Loaded WOW Events example data.');
-    setTimeout(() => setStatus(''), 3000);
-  };
-
   const handleClear = () => {
     setInputs({
       intro: '',
@@ -31,6 +23,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
       yacht: '',
       both: '',
     });
+    localStorage.removeItem('cac-inputs');
     setStatus('');
     setStatusType('normal');
   };
@@ -45,7 +38,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
 
     setLoading(true);
     setStatusType('normal');
-    setStatus('Thinking… crafting your personas with WOWOS AI.');
+    setStatus('Thinking… crafting your personas with OpenAI GPT-6 Luna.');
 
     try {
       const result = await generateAvatarApi(inputs);
@@ -98,7 +91,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="intro"
               rows={3}
-              placeholder="e.g. WOW Events Pvt. Ltd. is an events and experience design agency in India..."
+              placeholder="Describe who you are, what your business does, and the services or products you deliver..."
               value={inputs.intro}
               onChange={e => handleChange('intro', e.target.value)}
             />
@@ -111,7 +104,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="icp"
               rows={3}
-              placeholder="e.g. Marketing heads, brand managers and founders at ₹50 Cr+ companies..."
+              placeholder="Describe your ideal customer profile: target roles, company size, industry, and what they are evaluated on..."
               value={inputs.icp}
               onChange={e => handleChange('icp', e.target.value)}
             />
@@ -124,7 +117,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="life"
               rows={4}
-              placeholder="1. Event is 2-3 weeks away and current vendor dropped the ball..."
+              placeholder="1. Urgent deadline or crisis scenario they face right now...&#10;2. High-friction pain point that puts their credibility on the line...&#10;3. Critical risk or budget limitation they cannot afford to compromise..."
               value={inputs.life}
               onChange={e => handleChange('life', e.target.value)}
             />
@@ -138,7 +131,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="yacht"
               rows={4}
-              placeholder="1. Want annual flagship event to set new benchmark in their industry..."
+              placeholder="1. High-level ambition, status, or market benchmark they want to reach...&#10;2. Streamlined partnership or scaling goal to replace fragmented efforts...&#10;3. Transformational outcome that creates long-term value and prestige..."
               value={inputs.yacht}
               onChange={e => handleChange('yacht', e.target.value)}
             />
@@ -152,7 +145,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="both"
               rows={3}
-              placeholder="For Lifeboat clients we step in fast with a rapid-rescue team... For Yacht clients we offer annual experience partnerships..."
+              placeholder="How your business uniquely serves both emergency rescues and strategic partnerships..."
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
             />
@@ -168,9 +161,6 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               ) : (
                 'Create avatars'
               )}
-            </button>
-            <button type="button" onClick={handleLoadExample} disabled={loading}>
-              Load Example
             </button>
             <button type="button" id="clear" onClick={handleClear} disabled={loading}>
               Clear
@@ -192,4 +182,3 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
     </div>
   );
 }
-
