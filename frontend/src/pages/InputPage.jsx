@@ -176,7 +176,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               {loading ? (
                 <>
                   <span className="dot" style={{ width: 6, height: 6 }} />
-                  Creating avatars… ({elapsedSeconds}s)
+                  Creating avatars… 
                 </>
               ) : (
                 'Create avatars'
