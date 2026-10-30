@@ -1,0 +1,352 @@
+<title>Customer Avatar Creator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: two-pane workbench — brief on the left, avatar dossier on the right; Lifeboat (signal orange) vs Yacht (sea teal) */
+:root{
+  --bg:#eef2f6; --paper:#ffffff; --ink:#0f1d2e; --muted:#5a6878; --line:#d5dde6;
+  --navy:#13294b; --life:#e8590c; --life-soft:#fde7dc; --yacht:#0b7a75; --yacht-soft:#d8f0ee;
+  --focus:#2f6fd6;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1420; --paper:#121e2d; --ink:#e7edf4; --muted:#93a2b3; --line:#24344a;
+  --navy:#c9d8ee; --life:#ff8a4c; --life-soft:#3a2216; --yacht:#3cc4bb; --yacht-soft:#11302f; --focus:#7aa7ff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1420; --paper:#121e2d; --ink:#e7edf4; --muted:#93a2b3; --line:#24344a;
+  --navy:#c9d8ee; --life:#ff8a4c; --life-soft:#3a2216; --yacht:#3cc4bb; --yacht-soft:#11302f; --focus:#7aa7ff; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0;letter-spacing:-.02em;color:var(--navy);text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.legend{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.l{background:var(--life-soft);color:var(--life);border-color:transparent}
+.chip.y{background:var(--yacht-soft);color:var(--yacht);border-color:transparent}
+.grid{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+form{display:flex;flex-direction:column;gap:16px}
+.fld{display:flex;flex-direction:column;gap:6px}
+label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+label b{color:var(--ink);font-weight:500}
+label.l b{color:var(--life)} label.y b{color:var(--yacht)}
+textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical;min-height:72px;width:100%}
+textarea:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;padding:11px 16px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+button.primary{background:var(--navy);color:var(--paper);border-color:var(--navy);flex:1}
+button:disabled{opacity:.55;cursor:progress}
+button:hover:not(:disabled){filter:brightness(1.08)}
+.status{font-size:13px;color:var(--muted);min-height:1.4em;margin:0}
+.status.err{color:var(--life)}
+/* Output */
+.out{display:flex;flex-direction:column;gap:18px;min-width:0}
+.banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tabs{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+.tab{border:0;padding:8px 14px;border-radius:7px;background:transparent;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"].l{background:var(--life);color:#fff}
+.tab[aria-selected="true"].y{background:var(--yacht);color:#fff}
+.tab[aria-selected="true"].b{background:var(--navy);color:var(--paper)}
+.example{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;padding:24px;align-items:center;border-bottom:1px solid var(--line)}
+.card.l .hero{background:linear-gradient(120deg,var(--life-soft),transparent 70%)}
+.card.y .hero{background:linear-gradient(120deg,var(--yacht-soft),transparent 70%)}
+.portrait{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-size:58px;background:var(--paper);border:3px solid var(--accent)}
+.card.l{--accent:var(--life)} .card.y{--accent:var(--yacht)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0}
+.name{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.4vw,36px);line-height:1.05;margin:4px 0 6px;letter-spacing:-.02em;text-wrap:balance}
+.tagline{margin:0;color:var(--muted);font-style:italic}
+.why{padding:14px 24px;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
+.why strong{color:var(--ink)}
+.shift{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:0;border-bottom:1px solid var(--line)}
+.shift > div{padding:18px 24px;min-width:0}
+.shift .arrow{display:grid;place-items:center;padding:0 4px;color:var(--accent);font-family:var(--display);font-size:28px;font-weight:800}
+.shift h4,.sec h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
+.shift p{margin:0}
+.shift .to p{font-weight:600}
+@media (max-width:560px){.shift{grid-template-columns:minmax(0,1fr)} .shift .arrow{transform:rotate(90deg);padding:0}}
+.secs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.sec{padding:18px 24px;border-bottom:1px solid var(--line);min-width:0}
+.sec:nth-child(odd){border-right:1px solid var(--line)}
+.sec.full{grid-column:1/-1;border-right:0}
+@media (max-width:640px){.secs{grid-template-columns:minmax(0,1fr)} .sec:nth-child(odd){border-right:0}}
+.stage{font-family:var(--display);font-size:20px;font-weight:700;margin:0}
+.sec ol,.sec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.sec ol li::marker{color:var(--accent);font-family:var(--mono);font-size:12px}
+.quotes{display:flex;flex-wrap:wrap;gap:8px}
+.q{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px}
+.steps{counter-reset:s;list-style:none;padding:0 !important}
+.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.steps li::before{content:counter(s);width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-size:12px}
+.foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px}
+.bridge{padding:24px;display:flex;flex-direction:column;gap:18px}
+.bridge h3{font-family:var(--display);font-size:26px;font-weight:800;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.lanes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.lanes{grid-template-columns:minmax(0,1fr)}}
+.lane{border-radius:10px;padding:16px;min-width:0}
+.lane.l{background:var(--life-soft)} .lane.y{background:var(--yacht-soft)}
+.lane h4{margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.lane.l h4{color:var(--life)} .lane.y h4{color:var(--yacht)}
+.lane p{margin:0}
+.ladder{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.ladder li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:baseline;padding:12px 14px;border:1px solid var(--line);border-radius:10px}
+.ladder .tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.pdfsheet{--bg:#eef2f6;--paper:#ffffff;--ink:#0f1d2e;--muted:#5a6878;--line:#d5dde6;--navy:#13294b;--life:#e8590c;--life-soft:#fde7dc;--yacht:#0b7a75;--yacht-soft:#d8f0ee;color-scheme:light;position:fixed;left:-12000px;top:0;width:820px;background:var(--bg);color:var(--ink);padding:28px;display:flex;flex-direction:column;gap:14px}
+.pdfsheet .foot{display:none}
+.pdfhead{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pdfhead b{font-family:var(--display);font-size:18px;letter-spacing:-.01em;text-transform:none;color:var(--navy)}
+.pdfsheet .shift{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.pdfsheet .shift .arrow{transform:none;padding:0 4px}.pdfsheet .secs{grid-template-columns:repeat(2,minmax(0,1fr))}.pdfsheet .sec:nth-child(odd){border-right:1px solid var(--line)}.pdfsheet .sec.full{border-right:0}.pdfsheet .lanes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.banner-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.thinking{display:flex;align-items:center;gap:10px;color:var(--muted);padding:40px 24px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--life);animation:b 1s infinite alternate}
+.dot:nth-child(2){background:var(--yacht);animation-delay:.3s}
+@keyframes b{to{transform:translateY(-6px);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Customer Avatar Creator</h1>
+      <p class="sub">Describe your business and the two situations your buyers arrive in. Get back two animal-character avatars and a plan to serve both.</p>
+    </div>
+    <div class="legend"><span class="chip l">Lifeboat · rescue me</span><span class="chip y">Yacht · take me further</span></div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="Your inputs">
+      <form id="f">
+        <div class="fld">
+          <label for="intro"><b>1 · WOW Intro</b> — who you are</label>
+          <textarea id="intro" rows="3"></textarea>
+        </div>
+        <div class="fld">
+          <label for="icp"><b>2 · ICP</b> — ideal customer profile</label>
+          <textarea id="icp" rows="3"></textarea>
+        </div>
+        <div class="fld">
+          <label for="life" class="l"><b>3 · As a Lifeboat</b> — top 3 issues you solve</label>
+          <textarea id="life" rows="4"></textarea>
+          <p class="hint">When they're sinking: urgent, painful, needs rescue now.</p>
+        </div>
+        <div class="fld">
+          <label for="yacht" class="y"><b>4 · As a Yacht</b> — top 3 issues you solve</label>
+          <textarea id="yacht" rows="4"></textarea>
+          <p class="hint">When they're doing well: ambition, status, the next level.</p>
+        </div>
+        <div class="fld">
+          <label for="both"><b>5 · How you help both</b></label>
+          <textarea id="both" rows="3"></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="go">Create avatars</button>
+          <button type="button" id="clear">Clear</button>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </form>
+    </section>
+
+    <section class="out" aria-label="Avatar">
+      <div class="banner">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab l" role="tab" data-t="lifeboat" aria-selected="true">Lifeboat avatar</button>
+          <button type="button" class="tab y" role="tab" data-t="yacht" aria-selected="false">Yacht avatar</button>
+          <button type="button" class="tab b" role="tab" data-t="bridge" aria-selected="false">Serve both</button>
+        </div>
+        <div class="banner-r"><span class="example" id="exlabel">Example · WOW Events</span><button type="button" id="pdf">Download PDF</button></div>
+      </div>
+      <div id="view"></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const EX_IN = {
+  intro:"WOW Events Pvt. Ltd. is an events and experience design agency in India. We concept, design and produce brand launches, dealer meets, conferences and offsites that people talk about long after.",
+  icp:"Marketing heads, brand managers and founders at mid-to-large Indian companies (₹50 Cr+ revenue) who run 3–10 corporate events a year and are judged on how those events land with leadership, dealers and customers.",
+  life:"1. Event is 2–3 weeks away and the current vendor has dropped the ball or gone silent.\n2. Leadership is unhappy with last year's 'same old' event and the marketing head's credibility is on the line.\n3. Budget is fixed and tight, and they can't afford overruns or surprises.",
+  yacht:"1. They want their annual flagship event to set a new benchmark in their industry.\n2. They want one trusted partner across the year instead of juggling many vendors.\n3. They want events that create content, PR buzz and measurable brand impact.",
+  both:"For Lifeboat clients we step in fast with a rapid-rescue team, a fixed-scope plan in 48 hours and daily updates. For Yacht clients we offer an annual experience partnership with concept labs, design-led themes and post-event impact reports. Lifeboat wins become Yacht retainers."
+};
+const EX_OUT = {
+  lifeboat:{characterName:"Rescue Rhea the Restless Rabbit",animal:"Rabbit",emoji:"🐇",
+    tagline:"Ears up, heart racing, ready to bolt at the next bad message.",
+    whyAnimal:"A rabbit senses danger everywhere and can't settle. Rhea is in constant alert mode, watching every deadline and every message from her boss.",
+    currentState:"Three weeks to the dealer meet, the vendor isn't answering, and her CMO has already asked twice if 'everything is on track'.",
+    desiredState:"Walking into the venue the evening before and seeing everything set, on budget, with her CMO saying 'this is the best one yet'.",
+    stage:"Mid-career marketing manager in a growing company, under pressure to prove herself",
+    painPoints:["A vendor has gone silent with the event weeks away","Her credibility with leadership depends on this one event","A fixed budget with zero room for surprises"],
+    wants:["A partner who takes charge and replies within the hour","A clear plan and costing she can show her boss tomorrow","To sleep properly the week before the event"],
+    buyingBehaviour:["Decides fast once trust is built, often within a week","Needs one strong reference or case study, not a long deck","Pushes hard on fixed pricing and no hidden costs"],
+    language:["\"We're running out of time.\"","\"I can't go back to my boss with excuses.\"","\"Just tell me it'll be done.\"","\"What's the all-inclusive number?\""],
+    nextSteps:["Offer a free 30-minute rescue call within 24 hours","Send a 48-hour fixed-scope plan with a single all-in price","Share a short case study of a last-minute rescue event"]},
+  yacht:{characterName:"Visionary Vikram the Soaring Eagle",animal:"Eagle",emoji:"🦅",
+    tagline:"Flying high, already looking at the next mountain.",
+    whyAnimal:"Eagles see the whole landscape from above and pick their moment. Vikram plans the year ahead and wants a partner who matches his altitude.",
+    currentState:"Events go well but feel predictable. He manages five vendors and spends too much time on coordination instead of ideas.",
+    desiredState:"His flagship event is the one competitors copy, with one partner across the year and clear numbers on brand impact.",
+    stage:"Established brand or CMO in a market-leading company, scaling and building brand legacy",
+    painPoints:["Events look like everyone else's in the industry","Too many vendors, too much coordination","No way to show the ROI of event spend to the board"],
+    wants:["A signature experience that gets talked about","One strategic partner with a creative point of view","Content and PR value well beyond event day"],
+    buyingBehaviour:["Takes 4–8 weeks and involves procurement and leadership","Buys on creative vision and portfolio quality more than price","Values long-term relationships and annual contracts"],
+    language:["\"We want to set the benchmark.\"","\"What's the big idea?\"","\"How do we make this memorable?\"","\"Think of it as a year-long partnership.\""],
+    nextSteps:["Invite him to a Concept Lab session for his flagship event","Present 2–3 bold theme directions with mood boards","Propose an annual partnership with a quarterly impact report"]},
+  bridge:{headline:"Rescue the Rabbit today, fly with the Eagle tomorrow",
+    lifeboatOffer:"Rapid Rescue: a 48-hour fixed-scope plan, one all-in price and daily updates for events under 4 weeks away.",
+    yachtOffer:"Annual Experience Partnership: concept labs, design-led themes and post-event impact reports across the year.",
+    journey:[{tag:"Entry",text:"A Lifeboat client calls in a crisis; we deliver fast and calmly."},{tag:"Proof",text:"The rescued event lands well, and the client gets credit in front of leadership."},{tag:"Upgrade",text:"Within 30 days, offer a debrief and a preview of next year's calendar."},{tag:"Retainer",text:"Convert to an annual partnership: the Rabbit becomes an Eagle."}],
+    message:"Whether you're sinking or sailing, WOW Events gets you to a standing ovation."}
+};
+
+const $ = id => document.getElementById(id);
+const FIELDS = ["intro","icp","life","yacht","both"];
+let data = EX_OUT, tab = "lifeboat", busy = false;
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const li = arr => (arr||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+
+function avatarHTML(a, kind){
+  const k = kind==="lifeboat"?"l":"y";
+  return `<article class="card ${k}">
+    <div class="hero">
+      <div class="portrait" aria-hidden="true">${esc(a.emoji||"🐾")}</div>
+      <div style="min-width:0">
+        <p class="kicker">${kind==="lifeboat"?"Lifeboat customer":"Yacht customer"} · ${esc(a.animal)}</p>
+        <h2 class="name">${esc(a.characterName)}</h2>
+        <p class="tagline">${esc(a.tagline)}</p>
+      </div>
+    </div>
+    <div class="why"><strong>Why a ${esc((a.animal||"").toLowerCase())}?</strong> ${esc(a.whyAnimal)}</div>
+    <div class="shift">
+      <div><h4>Current state</h4><p>${esc(a.currentState)}</p></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="to"><h4>Desired state</h4><p>${esc(a.desiredState)}</p></div>
+    </div>
+    <div class="secs">
+      <div class="sec full"><h4>Stage of business / life</h4><p class="stage">${esc(a.stage)}</p></div>
+      <div class="sec"><h4>Top 3 pain points</h4><ol>${li(a.painPoints)}</ol></div>
+      <div class="sec"><h4>What they want</h4><ul>${li(a.wants)}</ul></div>
+      <div class="sec"><h4>Buying behaviour</h4><ul>${li(a.buyingBehaviour)}</ul></div>
+      <div class="sec"><h4>Language they use</h4><div class="quotes">${(a.language||[]).map(q=>`<span class="q">${esc(q)}</span>`).join("")}</div></div>
+      <div class="sec full"><h4>Next steps</h4><ol class="steps">${li(a.nextSteps)}</ol></div>
+    </div>
+    <div class="foot"><button type="button" class="copy">Copy as text</button></div>
+  </article>`;
+}
+function bridgeHTML(b){
+  return `<article class="card"><div class="bridge">
+    <div><p class="kicker" style="color:var(--muted)">How you help both</p><h3>${esc(b.headline)}</h3></div>
+    <div class="lanes">
+      <div class="lane l"><h4>Lifeboat offer</h4><p>${esc(b.lifeboatOffer)}</p></div>
+      <div class="lane y"><h4>Yacht offer</h4><p>${esc(b.yachtOffer)}</p></div>
+    </div>
+    <div><h4 class="kicker" style="color:var(--muted);margin-bottom:10px">Lifeboat → Yacht journey</h4>
+      <ol class="ladder">${(b.journey||[]).map(j=>`<li><span class="tag">${esc(j.tag)}</span><span>${esc(j.text)}</span></li>`).join("")}</ol></div>
+    <p class="tagline" style="font-size:16px">${esc(b.message)}</p>
+  </div><div class="foot"><button type="button" class="copy">Copy as text</button></div></article>`;
+}
+function asText(){
+  if(tab==="bridge"){const b=data.bridge;return `${b.headline}\n\nLifeboat offer: ${b.lifeboatOffer}\nYacht offer: ${b.yachtOffer}\n\nJourney:\n${b.journey.map(j=>`- ${j.tag}: ${j.text}`).join("\n")}\n\n${b.message}`}
+  const a=data[tab], L=x=>(x||[]).map((s,i)=>`${i+1}. ${s}`).join("\n");
+  return `${a.characterName} (${a.animal}) — ${tab==="lifeboat"?"Lifeboat":"Yacht"} customer\n${a.tagline}\nWhy this animal: ${a.whyAnimal}\n\nCurrent state: ${a.currentState}\nDesired state: ${a.desiredState}\n\nStage of business/life: ${a.stage}\n\nTop 3 pain points:\n${L(a.painPoints)}\n\nWhat they want:\n${L(a.wants)}\n\nBuying behaviour:\n${L(a.buyingBehaviour)}\n\nLanguage they use:\n${L(a.language)}\n\nNext steps:\n${L(a.nextSteps)}`;
+}
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.t===tab));
+  if(busy){$("view").innerHTML=`<div class="card"><div class="thinking"><span class="dot"></span><span class="dot"></span><span>Building your avatars…</span></div></div>`;return}
+  $("view").innerHTML = tab==="bridge"?bridgeHTML(data.bridge):avatarHTML(data[tab],tab);
+  const btn=$("view").querySelector(".copy");
+  btn.onclick=async()=>{const t=asText();try{await navigator.clipboard.writeText(t);btn.textContent="Copied"}catch{const ta=document.createElement("textarea");ta.value=t;$("view").append(ta);ta.select();btn.textContent="Text selected — press Ctrl/Cmd+C"}setTimeout(()=>btn.textContent="Copy as text",2500)};
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{tab=t.dataset.t;render()});
+
+// inputs: example by default, remember drafts per viewer
+let saved=null; try{saved=JSON.parse(localStorage.getItem("cac-inputs")||"null")}catch{}
+FIELDS.forEach(k=>{$(k).value=(saved&&saved[k]!=null)?saved[k]:EX_IN[k];$(k).addEventListener("input",save)});
+function save(){try{localStorage.setItem("cac-inputs",JSON.stringify(Object.fromEntries(FIELDS.map(k=>[k,$(k).value]))))}catch{}}
+$("clear").onclick=()=>{FIELDS.forEach(k=>$(k).value="");save();$("intro").focus()};
+try{const o=JSON.parse(localStorage.getItem("cac-output")||"null");if(o&&o.lifeboat){data=o;$("exlabel").textContent="Your last result"}}catch{}
+render();
+
+const SHAPE = `{
+ "lifeboat": AVATAR, "yacht": AVATAR,
+ "bridge": {"headline": string, "lifeboatOffer": string, "yachtOffer": string,
+   "journey": [{"tag": one-word stage, "text": string}] (4 items), "message": one-line promise}
+}
+AVATAR = {"characterName": alliterative human first name + "the" + adjective + animal (e.g. "Rescue Rhea the Restless Rabbit"),
+ "animal": string, "emoji": one standard Unicode emoji of exactly that animal (pick an animal that has one),
+ "tagline": one vivid line, "whyAnimal": 1-2 sentences on why this animal mirrors their situation,
+ "currentState": 1-2 sentences, concrete scene, "desiredState": 1-2 sentences, concrete scene,
+ "stage": stage of business/life in one line,
+ "painPoints": [3 strings], "wants": [3 strings], "buyingBehaviour": [3 strings],
+ "language": [4 short phrases they actually say, in quotes, natural Indian-English business tone],
+ "nextSteps": [3 concrete actions the business should take to win this customer]}`;
+
+let samplePromise = window.claude?.use ? claude.use("sample") : Promise.resolve(null);
+let downloadsPromise = window.claude?.use ? claude.use("downloads") : Promise.resolve(null);
+downloadsPromise.then(d=>{if(!d)$("pdf").hidden=true});
+
+$("pdf").onclick = async ()=>{
+  const btn=$("pdf");
+  if(busy) return;
+  const downloads = await downloadsPromise;
+  if(!downloads||!window.html2canvas||!window.jspdf){$("status").className="status err";$("status").textContent="PDF download isn't available in this view. Open the page in Claude to download.";return}
+  btn.disabled=true;btn.textContent="Preparing PDF…";
+  const sheet=document.createElement("div");sheet.className="pdfsheet";document.body.append(sheet);
+  try{
+    await document.fonts.ready;
+    const pdf=new jspdf.jsPDF({unit:"mm",format:"a4"});
+    const pages=[["lifeboat","Lifeboat avatar"],["yacht","Yacht avatar"],["bridge","How you help both"]];
+    for(let i=0;i<pages.length;i++){
+      const [k,label]=pages[i];
+      sheet.innerHTML=`<div class="pdfhead"><b>Customer Avatar</b><span>${label} · ${i+1} / 3</span></div>`+(k==="bridge"?bridgeHTML(data.bridge):avatarHTML(data[k],k));
+      const canvas=await html2canvas(sheet,{scale:2,backgroundColor:"#eef2f6",logging:false});
+      if(i>0) pdf.addPage();
+      pdf.setFillColor(238,242,246);pdf.rect(0,0,210,297,"F");
+      let w=194,h=canvas.height*w/canvas.width;
+      if(h>281){h=281;w=canvas.width*h/canvas.height}
+      pdf.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",(210-w)/2,8,w,h);
+    }
+    const name=((data.lifeboat?.characterName||"avatar")+"").split(" ")[1]||"avatar";
+    await downloads.save({filename:`customer-avatars-${name.toLowerCase().replace(/[^a-z0-9]+/g,"-")}.pdf`,data:pdf.output("blob")});
+    $("status").className="status";$("status").textContent="PDF saved.";
+  }catch(e){
+    if(e?.code!=="cancelled"&&e?.code!=="declined"){$("status").className="status err";$("status").textContent="Couldn't create the PDF. Try again."}
+  }finally{sheet.remove();btn.disabled=false;btn.textContent="Download PDF"}
+};
+
+$("f").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const v=Object.fromEntries(FIELDS.map(k=>[k,$(k).value.trim()]));
+  if(!v.intro||!v.icp||!v.life||!v.yacht){$("status").className="status err";$("status").textContent="Fill in the intro, ICP, Lifeboat and Yacht fields to create avatars.";return}
+  const sample = await samplePromise;
+  if(!sample){$("status").className="status err";$("status").textContent="Avatar generation needs this page open in Claude. Open it from claude.ai to use it.";return}
+  busy=true;$("go").disabled=true;$("status").className="status";$("status").textContent="Thinking… this usually takes 20–60 seconds.";tab="lifeboat";render();
+  const prompt=`You are a sharp marketing strategist. Build two customer avatars for this business using the Lifeboat vs Yacht model.
+Lifeboat customer = in trouble, urgent, needs rescue. Yacht customer = doing well, wants to go further, status and growth.
+Give each avatar an animal character that relates to their situation, current state and desired state. Choose two different animals. Be specific to this business and ICP; no generic filler.
+
+BUSINESS INTRO:\n${v.intro}\n\nICP:\n${v.icp}\n\nAS A LIFEBOAT, TOP 3 ISSUES WE SOLVE:\n${v.life}\n\nAS A YACHT, TOP 3 ISSUES WE SOLVE:\n${v.yacht}\n\nHOW WE HELP BOTH:\n${v.both||"(not given — propose it)"}
+
+Reply with only JSON in this shape:\n${SHAPE}`;
+  try{
+    const out = await sample.json(prompt);
+    if(!out||!out.lifeboat||!out.yacht||!out.bridge) throw {code:"invalid_json"};
+    data=out;try{localStorage.setItem("cac-output",JSON.stringify(out))}catch{}
+    $("exlabel").textContent="Your result";$("status").textContent="Done. Switch tabs to see each avatar.";
+  }catch(err){
+    const m={not_granted:"Claude access wasn't allowed for this page.",rate_limited:"Too many requests right now. Try again in a minute.",invalid_json:"The answer came back in the wrong format. Press Create avatars to try again.",session_expired:"Please sign in to Claude again.",refused:"Claude couldn't create avatars from this input. Try rewording it."};
+    $("status").className="status err";$("status").textContent=m[err?.code]||"Something went wrong. Press Create avatars to try again.";
+  }finally{busy=false;$("go").disabled=false;render()}
+});
+</script>
