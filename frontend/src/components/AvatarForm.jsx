@@ -42,7 +42,7 @@ export default function AvatarForm({
     requiredFields.forEach(field => {
       const value = inputs[field] || '';
       if (value.trim() === '') {
-        newErrors[field] = 'This field is required. Please enter your response.';
+        newErrors[field] = 'This field is required.';
         hasError = true;
       }
     });
@@ -65,6 +65,13 @@ export default function AvatarForm({
     if (onClear) onClear();
   };
 
+  // Helper for inline error styling
+  const getErrorStyle = (field) => {
+    return errors[field] 
+      ? { border: '1px solid #ef4444', backgroundColor: '#fef2f2' } 
+      : {};
+  };
+
   return (
     <section className="panel" aria-label="Your inputs">
       <form onSubmit={handleFormSubmit} noValidate>
@@ -81,9 +88,9 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.intro || ''}
             onChange={e => handleChange('intro', e)}
-            className={errors.intro ? 'input-err' : ''}
+            style={getErrorStyle('intro')}
           />
-          {errors.intro && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.intro}</p>}
+          {errors.intro && <p style={{color: '#ef4444', fontSize: '13px', margin: '4px 0 0'}}>{errors.intro}</p>}
         </div>
 
         {/* 2. ICP */}
@@ -98,9 +105,9 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.icp || ''}
             onChange={e => handleChange('icp', e)}
-            className={errors.icp ? 'input-err' : ''}
+            style={getErrorStyle('icp')}
           />
-          {errors.icp && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.icp}</p>}
+          {errors.icp && <p style={{color: '#ef4444', fontSize: '13px', margin: '4px 0 0'}}>{errors.icp}</p>}
         </div>
 
         {/* 3. Lifeboat */}
@@ -115,10 +122,10 @@ export default function AvatarForm({
             placeholder={'1.\n2.\n3.'}
             value={inputs.life || ''}
             onChange={e => handleChange('life', e)}
-            className={errors.life ? 'input-err' : ''}
+            style={getErrorStyle('life')}
           />
           <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
-          {errors.life && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.life}</p>}
+          {errors.life && <p style={{color: '#ef4444', fontSize: '13px', margin: '4px 0 0'}}>{errors.life}</p>}
         </div>
 
         {/* 4. Yacht */}
@@ -133,10 +140,10 @@ export default function AvatarForm({
             placeholder={'1.\n2.\n3.'}
             value={inputs.yacht || ''}
             onChange={e => handleChange('yacht', e)}
-            className={errors.yacht ? 'input-err' : ''}
+            style={getErrorStyle('yacht')}
           />
           <p className="hint">When they're doing well: ambition, status, the next level.</p>
-          {errors.yacht && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.yacht}</p>}
+          {errors.yacht && <p style={{color: '#ef4444', fontSize: '13px', margin: '4px 0 0'}}>{errors.yacht}</p>}
         </div>
 
         {/* 5. How you help both */}
@@ -151,10 +158,9 @@ export default function AvatarForm({
             placeholder={'Explain your method in 3 steps:\n1.\n2.\n3.'}
             value={inputs.both || ''}
             onChange={e => handleChange('both', e)}
-            style={{ height: '125px' }}
-            className={errors.both ? 'input-err' : ''}
+            style={{ height: '125px', ...getErrorStyle('both') }}
           />
-          {errors.both && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.both}</p>}
+          {errors.both && <p style={{color: '#ef4444', fontSize: '13px', margin: '4px 0 0'}}>{errors.both}</p>}
         </div>
 
         {/* Action Buttons */}
