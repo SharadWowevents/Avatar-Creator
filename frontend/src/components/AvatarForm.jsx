@@ -83,7 +83,7 @@ export default function AvatarForm({
             placeholder="Explain your method in 3 steps:&#10;1. &#10;2. &#10;3. "
             value={inputs.both}
             onChange={e => handleChange('both', e.target.value)}
-            style={{ height: '100px' }} // Adjust height to accommodate 3 lines of text
+            style={{ height: '125px' }} // Adjust height to accommodate 3 lines of text
           />
         </div>
 

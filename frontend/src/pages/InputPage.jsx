@@ -168,7 +168,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
               disabled={loading}
-              style={{ height: '100px' }}
+              style={{ height: '125px' }}
             />
           </div>
  
