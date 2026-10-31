@@ -164,10 +164,11 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="both"
               rows={3}
-              placeholder="Explain your method in 3 steps:&#10;1. &#10;2. &#10;3. "
+              placeholder="Explain your method in 3 steps&#10;1. &#10;2. &#10;3. "
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
               disabled={loading}
+              style={{ height: '100px' }}
             />
           </div>
  
