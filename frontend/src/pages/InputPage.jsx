@@ -106,7 +106,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="intro"
               rows={3}
-              placeholder="Target Role/Designation, Company Size, Industry, Location, KRA, KPI, Age, Education, Interest, Hobbies, Lifestyle, Life Goals Etc."
+              placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
               value={inputs.intro}
               onChange={e => handleChange('intro', e.target.value)}
               disabled={loading}
