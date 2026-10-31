@@ -1,4 +1,4 @@
-import React from 'react';
+limport React from 'react';
 
 export default function AvatarForm({
   inputs,
@@ -29,6 +29,7 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.intro}
             onChange={e => handleChange('intro', e.target.value)}
+            required
           />
         </div>
 
@@ -42,6 +43,7 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.icp}
             onChange={e => handleChange('icp', e.target.value)}
+            required
           />
         </div>
 
@@ -55,6 +57,7 @@ export default function AvatarForm({
             placeholder="1. &#10;2. &#10;3. "
             value={inputs.life}
             onChange={e => handleChange('life', e.target.value)}
+            required
           />
           <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
         </div>
@@ -69,6 +72,7 @@ export default function AvatarForm({
             placeholder="1. &#10;2. &#10;3. "
             value={inputs.yacht}
             onChange={e => handleChange('yacht', e.target.value)}
+            required
           />
           <p className="hint">When they're doing well: ambition, status, the next level.</p>
         </div>
@@ -83,7 +87,8 @@ export default function AvatarForm({
             placeholder="Explain your method in 3 steps:&#10;1. &#10;2. &#10;3. "
             value={inputs.both}
             onChange={e => handleChange('both', e.target.value)}
-            style={{ height: '125px' }} // Adjust height to accommodate 3 lines of text
+            style={{ height: '125px' }}
+            required
           />
         </div>
 
