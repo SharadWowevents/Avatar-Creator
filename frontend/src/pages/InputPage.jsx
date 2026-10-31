@@ -2,7 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateAvatarApi } from '../api/avatarApi';
 
-export default function InputPage({ inputs, setInputs, setResultData, onRefreshSaved }) {
+// Helper to check if two sets of inputs are identical
+function areInputsIdentical(a, b) {
+  if (!a || !b) return false;
+  const norm = str => (str || '').toString().trim().replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
+  return (
+    norm(a.intro) === norm(b.intro) &&
+    norm(a.icp) === norm(b.icp) &&
+    norm(a.life) === norm(b.life) &&
+    norm(a.yacht) === norm(b.yacht) &&
+    norm(a.both) === norm(b.both)
+  );
+}
+
+export default function InputPage({
+  inputs,
+  setInputs,
+  resultData,
+  setResultData,
+  lastGeneratedInputs,
+  setLastGeneratedInputs,
+  savedAvatars,
+  onRefreshSaved,
+}) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -98,6 +120,27 @@ export default function InputPage({ inputs, setInputs, setResultData, onRefreshS
       return;
     }
 
+    // 1. If user previously generated avatar and clicks "Create avatars" with the exact same inputs:
+    if (resultData && areInputsIdentical(inputs, lastGeneratedInputs)) {
+      navigate('/result');
+      return;
+    }
+
+    // 2. If any existing saved avatar in the user's history has the exact same inputs:
+    const matchingSaved = (savedAvatars || []).find(item => areInputsIdentical(inputs, item.inputs));
+    if (matchingSaved && matchingSaved.output) {
+      setResultData(matchingSaved.output);
+      if (setLastGeneratedInputs) {
+        setLastGeneratedInputs(matchingSaved.inputs);
+      }
+      try {
+        localStorage.setItem('cac-output', JSON.stringify(matchingSaved.output));
+        localStorage.setItem('cac-last-inputs', JSON.stringify(matchingSaved.inputs));
+      } catch {}
+      navigate('/result');
+      return;
+    }
+
     setLoading(true);
     setStatusType('normal');
     setStatus('');
@@ -105,8 +148,12 @@ export default function InputPage({ inputs, setInputs, setResultData, onRefreshS
     try {
       const result = await generateAvatarApi(inputs);
       setResultData(result);
+      if (setLastGeneratedInputs) {
+        setLastGeneratedInputs(inputs);
+      }
       try {
         localStorage.setItem('cac-output', JSON.stringify(result));
+        localStorage.setItem('cac-last-inputs', JSON.stringify(inputs));
       } catch {}
 
       // Refresh saved avatars list (since result is automatically saved)

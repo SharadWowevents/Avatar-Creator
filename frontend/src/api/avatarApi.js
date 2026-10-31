@@ -41,6 +41,15 @@ export async function generateAvatarApi(inputs) {
   } catch (err) {
     console.warn('API generate failed or backend offline. Falling back to dynamic persona engine:', err);
 
+    // Check offline input cache so identical inputs return the identical fallback
+    const offlineFingerprint = 'cac-cached-' + Object.values(inputs).map(s => (s || '').trim()).join('|||');
+    try {
+      const cached = localStorage.getItem(offlineFingerprint);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {}
+
     // Heuristic client fallback derived dynamically from user inputs
     const brandName = (inputs.intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates)|\b)/i) || [])[1] || 'Your business';
     const fallbackOutput = {
@@ -140,6 +149,7 @@ export async function generateAvatarApi(inputs) {
         createdAt: new Date().toISOString()
       });
       localStorage.setItem('cac-saved-list', JSON.stringify(local));
+      localStorage.setItem(offlineFingerprint, JSON.stringify(fallbackOutput));
     } catch {}
 
     return fallbackOutput;

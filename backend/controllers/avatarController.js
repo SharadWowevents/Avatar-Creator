@@ -7,6 +7,19 @@ const { generateAvatarPdfBuffer } = require('../services/pdfService');
 // In-memory store when MongoDB is offline (starts clean without demo records)
 let memoryStore = [];
 
+// Helper to compare if two sets of inputs are identical
+function areInputsIdentical(a, b) {
+  if (!a || !b) return false;
+  const norm = str => (str || '').toString().trim().replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
+  return (
+    norm(a.intro) === norm(b.intro) &&
+    norm(a.icp) === norm(b.icp) &&
+    norm(a.life) === norm(b.life) &&
+    norm(a.yacht) === norm(b.yacht) &&
+    norm(a.both) === norm(b.both)
+  );
+}
+
 /**
  * Generate Avatar Dossier
  * POST /api/avatars/generate
@@ -19,6 +32,46 @@ exports.generate = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'All 5 fields (Intro, ICP, Lifeboat, Yacht, and How you help both) are mandatory.'
+      });
+    }
+
+    const cleanInputs = {
+      intro: (intro || '').trim(),
+      icp: (icp || '').trim(),
+      life: (life || '').trim(),
+      yacht: (yacht || '').trim(),
+      both: (both || '').trim(),
+    };
+
+    // Check if an avatar was already generated for these same inputs (same input = same result)
+    let existingRecord = null;
+    if (getStatus()) {
+      const userFilter = req.user ? { user: req.user._id } : {};
+      const candidates = await Avatar.find(userFilter).sort({ createdAt: -1 });
+      existingRecord = candidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
+      if (!existingRecord && !req.user) {
+        const allCandidates = await Avatar.find({}).sort({ createdAt: -1 }).limit(50);
+        existingRecord = allCandidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
+      }
+    } else {
+      const userId = req.user ? req.user._id?.toString() : null;
+      existingRecord = memoryStore.find(c => {
+        const matchUser = !userId || (c.user && c.user.toString() === userId);
+        return matchUser && areInputsIdentical(c.inputs, cleanInputs);
+      });
+      if (!existingRecord && !userId) {
+        existingRecord = memoryStore.find(c => areInputsIdentical(c.inputs, cleanInputs));
+      }
+    }
+
+    if (existingRecord && existingRecord.output) {
+      console.log(`[Avatar Generation] Matching inputs detected. Returning previously generated avatar (${existingRecord._id}).`);
+      return res.status(200).json({
+        success: true,
+        message: 'Existing avatar for identical inputs retrieved',
+        data: existingRecord.output,
+        saved: existingRecord,
+        cached: true,
       });
     }
 

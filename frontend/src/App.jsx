@@ -50,6 +50,15 @@ function MainApp() {
     }
   });
 
+  // Track the inputs that generated the current result (for instant return if same inputs)
+  const [lastGeneratedInputs, setLastGeneratedInputs] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cac-last-inputs') || 'null');
+    } catch {
+      return null;
+    }
+  });
+
   // Health and Saved Avatars state
   const [backendHealth, setBackendHealth] = useState({
     mongoConnected: false,
@@ -106,7 +115,13 @@ function MainApp() {
   };
 
   const handleLoadAvatar = item => {
-    if (item.inputs) setInputs(item.inputs);
+    if (item.inputs) {
+      setInputs(item.inputs);
+      setLastGeneratedInputs(item.inputs);
+      try {
+        localStorage.setItem('cac-last-inputs', JSON.stringify(item.inputs));
+      } catch {}
+    }
     if (item.output) {
       setData(item.output);
       try {
@@ -145,7 +160,11 @@ function MainApp() {
               <InputPage
                 inputs={inputs}
                 setInputs={setInputs}
+                resultData={data}
                 setResultData={setData}
+                lastGeneratedInputs={lastGeneratedInputs}
+                setLastGeneratedInputs={setLastGeneratedInputs}
+                savedAvatars={savedAvatars}
                 onRefreshSaved={loadSavedList}
               />
             </ProtectedRoute>

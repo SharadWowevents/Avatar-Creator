@@ -26,6 +26,18 @@ async function testUnit() {
   };
   await avatarController.generate(reqGen, resGen);
 
+  console.log('--- 1b. Testing Same-Input Idempotency (Same Inputs return Same Result) ---');
+  let duplicateResult = null;
+  const resGen2 = {
+    status: (code) => ({
+      json: (data) => {
+        console.log(`[Same-Input Status ${code}] Cached:`, data.cached, 'Identical Character:', data.data?.lifeboat?.characterName === genResult?.lifeboat?.characterName);
+        duplicateResult = data.data;
+      }
+    })
+  };
+  await avatarController.generate(reqGen, resGen2);
+
   console.log('--- 2. Testing Create / Save Controller ---');
   let savedId = null;
   const reqCreate = {
