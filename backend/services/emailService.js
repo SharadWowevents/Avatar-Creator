@@ -178,9 +178,7 @@ async function sendAvatarDossierEmail({
 
       <hr style="border:none;border-top:1px solid #eef2f6;margin:28px 0 16px;">
       
-      <p style="font-size:12px;color:#5a6878;margin:0 0 4px;">
-        Sent to <strong>${toEmail}</strong> (BCC: ${bcc})
-      </p>
+      
       <p style="font-size:11px;color:#93a2b3;margin:0;">
         WOW Events Customer Avatar Creator • All rights reserved
       </p>
