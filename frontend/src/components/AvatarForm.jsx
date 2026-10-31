@@ -10,10 +10,17 @@ export default function AvatarForm({
   status,
   statusType,
 }) {
-  const requiredFields = ['intro', 'icp', 'life', 'yacht', 'both'];
+  const requiredFields = [
+    'intro',
+    'icp',
+    'life',
+    'yacht',
+    'both',
+  ];
 
+  // Handle input changes
   const handleChange = (field, e) => {
-    // Clear previous validation errors while typing
+    // Clear previous validation message
     e.target.setCustomValidity('');
 
     setInputs(prev => ({
@@ -22,43 +29,60 @@ export default function AvatarForm({
     }));
   };
 
+  // Validate and submit form
   const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    // Validate all mandatory fields
+    // Prevent submission while loading
+    if (loading) return;
+
+    const form = e.currentTarget;
+
+    // Clear all previous validation errors
+    requiredFields.forEach(field => {
+      const element = form.elements.namedItem(field);
+
+      if (element) {
+        element.setCustomValidity('');
+      }
+    });
+
+    // Validate every mandatory field
     for (const field of requiredFields) {
-      const value = inputs[field] || '';
+      const element = form.elements.namedItem(field);
 
-      if (value.trim() === '') {
-        const inputElement = e.currentTarget.elements[field];
-
-        if (inputElement) {
-          inputElement.setCustomValidity(
+      // Check actual DOM value, including spaces and newlines
+      if (!element || element.value.trim() === '') {
+        if (element) {
+          element.setCustomValidity(
             'This field is mandatory. Please enter your response.'
           );
 
-          inputElement.reportValidity();
-          inputElement.focus();
+          element.reportValidity();
+          element.focus();
         }
 
-        return;
+        return; // Stop submission immediately
       }
     }
 
-    // Submit only when all fields contain actual text
-    if (onSubmit) {
+    // All five fields are valid
+    if (typeof onSubmit === 'function') {
       onSubmit(e);
     }
   };
 
   return (
     <section className="panel" aria-label="Your inputs">
+
       <form onSubmit={handleFormSubmit} noValidate>
 
+        {/* 1. WOW Intro */}
         <div className="fld">
           <label htmlFor="intro">
             <b>1 · WOW Intro</b> — who you are
           </label>
+
           <textarea
             id="intro"
             name="intro"
@@ -70,10 +94,12 @@ export default function AvatarForm({
           />
         </div>
 
+        {/* 2. ICP */}
         <div className="fld">
           <label htmlFor="icp">
             <b>2 · ICP</b> — ideal customer profile
           </label>
+
           <textarea
             id="icp"
             name="icp"
@@ -85,10 +111,12 @@ export default function AvatarForm({
           />
         </div>
 
+        {/* 3. Lifeboat */}
         <div className="fld">
           <label htmlFor="life" className="l">
             <b>3 · As a Lifeboat</b> — top 3 issues you solve
           </label>
+
           <textarea
             id="life"
             name="life"
@@ -98,15 +126,18 @@ export default function AvatarForm({
             onChange={e => handleChange('life', e)}
             required
           />
+
           <p className="hint">
             When they're sinking: urgent, painful, needs rescue now.
           </p>
         </div>
 
+        {/* 4. Yacht */}
         <div className="fld">
           <label htmlFor="yacht" className="y">
             <b>4 · As a Yacht</b> — top 3 issues you solve
           </label>
+
           <textarea
             id="yacht"
             name="yacht"
@@ -116,15 +147,18 @@ export default function AvatarForm({
             onChange={e => handleChange('yacht', e)}
             required
           />
+
           <p className="hint">
             When they're doing well: ambition, status, the next level.
           </p>
         </div>
 
+        {/* 5. How you help both */}
         <div className="fld">
           <label htmlFor="both">
             <b>5 · How you help both</b>
           </label>
+
           <textarea
             id="both"
             name="both"
@@ -137,7 +171,9 @@ export default function AvatarForm({
           />
         </div>
 
+        {/* Action Buttons */}
         <div className="actions">
+
           <button
             type="submit"
             className="primary"
@@ -153,8 +189,10 @@ export default function AvatarForm({
           >
             Clear
           </button>
+
         </div>
 
+        {/* Status Message */}
         <p
           className={`status ${
             statusType === 'error'
