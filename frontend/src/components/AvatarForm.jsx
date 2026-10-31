@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function AvatarForm({
   inputs,
@@ -10,60 +9,48 @@ export default function AvatarForm({
   status,
   statusType,
 }) {
-  const requiredFields = [
-    'intro',
-    'icp',
-    'life',
-    'yacht',
-    'both',
-  ];
+  const [errors, setErrors] = useState({});
+
+  const requiredFields = ['intro', 'icp', 'life', 'yacht', 'both'];
 
   // Handle input changes
   const handleChange = (field, e) => {
-    // Clear previous validation message
-    e.target.setCustomValidity('');
-
     setInputs(prev => ({
       ...prev,
       [field]: e.target.value,
     }));
+
+    // Clear the error for this specific field as the user types
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: null,
+      }));
+    }
   };
 
   // Validate and submit form
   const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    // Prevent submission while loading
     if (loading) return;
 
-    const form = e.currentTarget;
+    const newErrors = {};
+    let hasError = false;
 
-    // Clear all previous validation errors
+    // Validate every mandatory field against the React state
     requiredFields.forEach(field => {
-      const element = form.elements.namedItem(field);
-
-      if (element) {
-        element.setCustomValidity('');
+      const value = inputs[field] || '';
+      if (value.trim() === '') {
+        newErrors[field] = 'This field is required. Please enter your response.';
+        hasError = true;
       }
     });
 
-    // Validate every mandatory field
-    for (const field of requiredFields) {
-      const element = form.elements.namedItem(field);
-
-      // Check actual DOM value, including spaces and newlines
-      if (!element || element.value.trim() === '') {
-        if (element) {
-          element.setCustomValidity(
-            'This field is mandatory. Please enter your response.'
-          );
-
-          element.reportValidity();
-          element.focus();
-        }
-
-        return; // Stop submission immediately
-      }
+    // If there are errors, update the state and stop submission
+    if (hasError) {
+      setErrors(newErrors);
+      return;
     }
 
     // All five fields are valid
@@ -72,9 +59,14 @@ export default function AvatarForm({
     }
   };
 
+  // Handle Clear
+  const handleClear = () => {
+    setErrors({});
+    if (onClear) onClear();
+  };
+
   return (
     <section className="panel" aria-label="Your inputs">
-
       <form onSubmit={handleFormSubmit} noValidate>
 
         {/* 1. WOW Intro */}
@@ -82,7 +74,6 @@ export default function AvatarForm({
           <label htmlFor="intro">
             <b>1 · WOW Intro</b> — who you are
           </label>
-
           <textarea
             id="intro"
             name="intro"
@@ -90,8 +81,9 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.intro || ''}
             onChange={e => handleChange('intro', e)}
-            required
+            className={errors.intro ? 'input-err' : ''}
           />
+          {errors.intro && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.intro}</p>}
         </div>
 
         {/* 2. ICP */}
@@ -99,7 +91,6 @@ export default function AvatarForm({
           <label htmlFor="icp">
             <b>2 · ICP</b> — ideal customer profile
           </label>
-
           <textarea
             id="icp"
             name="icp"
@@ -107,8 +98,9 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.icp || ''}
             onChange={e => handleChange('icp', e)}
-            required
+            className={errors.icp ? 'input-err' : ''}
           />
+          {errors.icp && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.icp}</p>}
         </div>
 
         {/* 3. Lifeboat */}
@@ -116,7 +108,6 @@ export default function AvatarForm({
           <label htmlFor="life" className="l">
             <b>3 · As a Lifeboat</b> — top 3 issues you solve
           </label>
-
           <textarea
             id="life"
             name="life"
@@ -124,12 +115,10 @@ export default function AvatarForm({
             placeholder={'1.\n2.\n3.'}
             value={inputs.life || ''}
             onChange={e => handleChange('life', e)}
-            required
+            className={errors.life ? 'input-err' : ''}
           />
-
-          <p className="hint">
-            When they're sinking: urgent, painful, needs rescue now.
-          </p>
+          <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
+          {errors.life && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.life}</p>}
         </div>
 
         {/* 4. Yacht */}
@@ -137,7 +126,6 @@ export default function AvatarForm({
           <label htmlFor="yacht" className="y">
             <b>4 · As a Yacht</b> — top 3 issues you solve
           </label>
-
           <textarea
             id="yacht"
             name="yacht"
@@ -145,12 +133,10 @@ export default function AvatarForm({
             placeholder={'1.\n2.\n3.'}
             value={inputs.yacht || ''}
             onChange={e => handleChange('yacht', e)}
-            required
+            className={errors.yacht ? 'input-err' : ''}
           />
-
-          <p className="hint">
-            When they're doing well: ambition, status, the next level.
-          </p>
+          <p className="hint">When they're doing well: ambition, status, the next level.</p>
+          {errors.yacht && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.yacht}</p>}
         </div>
 
         {/* 5. How you help both */}
@@ -158,7 +144,6 @@ export default function AvatarForm({
           <label htmlFor="both">
             <b>5 · How you help both</b>
           </label>
-
           <textarea
             id="both"
             name="both"
@@ -167,40 +152,24 @@ export default function AvatarForm({
             value={inputs.both || ''}
             onChange={e => handleChange('both', e)}
             style={{ height: '125px' }}
-            required
+            className={errors.both ? 'input-err' : ''}
           />
+          {errors.both && <p className="err-msg" style={{color: 'red', fontSize: '13px', margin: '4px 0 0'}}>{errors.both}</p>}
         </div>
 
         {/* Action Buttons */}
         <div className="actions">
-
-          <button
-            type="submit"
-            className="primary"
-            disabled={loading}
-          >
+          <button type="submit" className="primary" disabled={loading}>
             {loading ? 'Building avatars…' : 'Create avatars'}
           </button>
-
-          <button
-            type="button"
-            onClick={onClear}
-            disabled={loading}
-          >
+          <button type="button" onClick={handleClear} disabled={loading}>
             Clear
           </button>
-
         </div>
 
         {/* Status Message */}
         <p
-          className={`status ${
-            statusType === 'error'
-              ? 'err'
-              : statusType === 'success'
-              ? 'success'
-              : ''
-          }`}
+          className={`status ${statusType === 'error' ? 'err' : statusType === 'success' ? 'success' : ''}`}
           role="status"
           aria-live="polite"
         >
