@@ -120,7 +120,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="icp"
               rows={3}
-              placeholder="Describe your ideal customer profile: target roles, company size, industry, and what they are evaluated on..."
+              placeholder="Target Role/Designation, Company Size, Industry, Location, KRA, KPI, Age, Education, Interest, Hobbies, Lifestyle, Life Goals Etc"
               value={inputs.icp}
               onChange={e => handleChange('icp', e.target.value)}
               disabled={loading}

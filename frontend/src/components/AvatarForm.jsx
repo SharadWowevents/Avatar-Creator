@@ -39,7 +39,7 @@ export default function AvatarForm({
           <textarea
             id="icp"
             rows={3}
-            placeholder="Describe your ideal customer profile: target roles, company size, industry, and what they are evaluated on..."
+            placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.icp}
             onChange={e => handleChange('icp', e.target.value)}
           />
