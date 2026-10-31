@@ -3,15 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AvatarCard from '../components/AvatarCard';
 import BridgeCard from '../components/BridgeCard';
-import { exportToPdf } from '../utils/pdfExport';
+import { exportToPdf, generatePdfBase64 } from '../utils/pdfExport';
+import { sendAvatarEmailApi } from '../api/avatarApi';
 
 export default function ResultPage({ data, inputs }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tab, setTab] = useState('lifeboat');
   const [downloading, setDownloading] = useState(false);
+  const [emailing, setEmailing] = useState(false);
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('normal');
+
+  const handleSendEmail = async () => {
+    if (!data || emailing) return;
+    try {
+      setEmailing(true);
+      setStatus('Generating high-resolution visual PDF and sending email…');
+      setStatusType('normal');
+      const { dataUri, filename } = await generatePdfBase64(data);
+      await sendAvatarEmailApi({
+        output: data,
+        pdfBase64: dataUri,
+        pdfFilename: filename,
+        toEmail: user?.email,
+        recipientName: user?.name,
+      });
+      setStatus(`✓ PDF email successfully sent to ${user?.email || 'your email'} (BCC: sachin@wowos.in)!`);
+      setStatusType('success');
+      setTimeout(() => setStatus(''), 5000);
+    } catch (err) {
+      console.error('Email error:', err);
+      setStatus('Failed to send email. Please check server SMTP configuration.');
+      setStatusType('error');
+    } finally {
+      setEmailing(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     if (!data) return;
@@ -111,6 +139,16 @@ export default function ResultPage({ data, inputs }) {
           </span>
 
           <span className="example">{dossierTitle}</span>
+
+          <button
+            type="button"
+            onClick={handleSendEmail}
+            disabled={emailing}
+            style={{ fontSize: '13px', padding: '6px 12px' }}
+            title={`Send the high-resolution visual PDF to ${user?.email || 'your email'}`}
+          >
+            {emailing ? '✉ Sending…' : '✉ Re-Email PDF'}
+          </button>
 
           <button
             type="button"

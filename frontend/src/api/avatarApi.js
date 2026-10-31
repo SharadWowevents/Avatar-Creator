@@ -37,7 +37,11 @@ export async function generateAvatarApi(inputs) {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Generation failed');
     }
-    return data.data;
+    const output = data.data;
+    if (output && typeof output === 'object') {
+      output._emailSent = Boolean(data.email?.success);
+    }
+    return output;
   } catch (err) {
     console.warn('API generate failed or backend offline. Falling back to dynamic persona engine:', err);
 

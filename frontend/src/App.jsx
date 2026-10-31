@@ -15,7 +15,9 @@ import './App.css';
 
 function MainApp() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const currentUserId = user?._id ? String(user._id) : (user?.email || null);
+  const [activeUserId, setActiveUserId] = useState(() => currentUserId);
 
   // Theme state
   const [theme, setTheme] = useState(() => {
@@ -25,9 +27,10 @@ function MainApp() {
   // Inputs state - starts completely blank
   const [inputs, setInputs] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('cac-inputs') || 'null');
+      const activeKey = currentUserId ? `cac-inputs_${currentUserId}` : 'cac-inputs';
+      const saved = JSON.parse(localStorage.getItem(activeKey) || 'null');
       if (saved && saved.intro && saved.intro.includes('WOW Events')) {
-        localStorage.removeItem('cac-inputs');
+        localStorage.removeItem(activeKey);
         return EX_IN;
       }
       return saved || EX_IN;
@@ -39,9 +42,10 @@ function MainApp() {
   // Result Dossier state - starts empty (null) until user generates
   const [data, setData] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('cac-output') || 'null');
+      const activeKey = currentUserId ? `cac-output_${currentUserId}` : 'cac-output';
+      const saved = JSON.parse(localStorage.getItem(activeKey) || 'null');
       if (saved && saved.lifeboat && saved.lifeboat.characterName?.includes('Rescue Rhea')) {
-        localStorage.removeItem('cac-output');
+        localStorage.removeItem(activeKey);
         return null;
       }
       return (saved && saved.lifeboat) ? saved : null;
@@ -53,7 +57,8 @@ function MainApp() {
   // Track the inputs that generated the current result (for instant return if same inputs)
   const [lastGeneratedInputs, setLastGeneratedInputs] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('cac-last-inputs') || 'null');
+      const activeKey = currentUserId ? `cac-last-inputs_${currentUserId}` : 'cac-last-inputs';
+      return JSON.parse(localStorage.getItem(activeKey) || 'null');
     } catch {
       return null;
     }
@@ -69,6 +74,55 @@ function MainApp() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
 
+  // Sync state whenever the active user changes (login, logout, account switch)
+  useEffect(() => {
+    if (currentUserId !== activeUserId) {
+      setActiveUserId(currentUserId);
+
+      if (!currentUserId) {
+        // User logged out: clear state and general cache
+        setInputs(EX_IN);
+        setData(null);
+        setLastGeneratedInputs(null);
+        setSavedAvatars([]);
+        try {
+          localStorage.removeItem('cac-inputs');
+          localStorage.removeItem('cac-output');
+          localStorage.removeItem('cac-last-inputs');
+        } catch {}
+      } else {
+        // User logged in / switched account:
+        // Load ONLY drafts belonging to this user (if any exist), otherwise clean blank
+        let userInputs = EX_IN;
+        try {
+          const saved = JSON.parse(localStorage.getItem(`cac-inputs_${currentUserId}`) || 'null');
+          if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+            userInputs = saved;
+          }
+        } catch {}
+        setInputs(userInputs);
+
+        let userOutput = null;
+        try {
+          const savedOut = JSON.parse(localStorage.getItem(`cac-output_${currentUserId}`) || 'null');
+          if (savedOut && savedOut.lifeboat) {
+            userOutput = savedOut;
+          }
+        } catch {}
+        setData(userOutput);
+
+        let userLast = null;
+        try {
+          userLast = JSON.parse(localStorage.getItem(`cac-last-inputs_${currentUserId}`) || 'null');
+        } catch {}
+        setLastGeneratedInputs(userLast);
+
+        // Fetch this user's saved avatars from backend
+        loadSavedList();
+      }
+    }
+  }, [currentUserId, activeUserId]);
+
   // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -79,14 +133,44 @@ function MainApp() {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Persist input drafts
+  // Persist input drafts scoped to the active user
   useEffect(() => {
+    if (!currentUserId) return;
     try {
+      localStorage.setItem(`cac-inputs_${currentUserId}`, JSON.stringify(inputs));
       localStorage.setItem('cac-inputs', JSON.stringify(inputs));
     } catch (e) {
       console.warn('LocalStorage error:', e);
     }
-  }, [inputs]);
+  }, [inputs, currentUserId]);
+
+  // Persist output scoped to active user
+  useEffect(() => {
+    if (!currentUserId) return;
+    try {
+      if (data) {
+        localStorage.setItem(`cac-output_${currentUserId}`, JSON.stringify(data));
+        localStorage.setItem('cac-output', JSON.stringify(data));
+      } else {
+        localStorage.removeItem(`cac-output_${currentUserId}`);
+        localStorage.removeItem('cac-output');
+      }
+    } catch {}
+  }, [data, currentUserId]);
+
+  // Persist last generated inputs scoped to active user
+  useEffect(() => {
+    if (!currentUserId) return;
+    try {
+      if (lastGeneratedInputs) {
+        localStorage.setItem(`cac-last-inputs_${currentUserId}`, JSON.stringify(lastGeneratedInputs));
+        localStorage.setItem('cac-last-inputs', JSON.stringify(lastGeneratedInputs));
+      } else {
+        localStorage.removeItem(`cac-last-inputs_${currentUserId}`);
+        localStorage.removeItem('cac-last-inputs');
+      }
+    } catch {}
+  }, [lastGeneratedInputs, currentUserId]);
 
   // Initial load: check health & fetch saved avatars if authenticated
   useEffect(() => {
@@ -119,12 +203,20 @@ function MainApp() {
       setInputs(item.inputs);
       setLastGeneratedInputs(item.inputs);
       try {
+        if (currentUserId) {
+          localStorage.setItem(`cac-inputs_${currentUserId}`, JSON.stringify(item.inputs));
+          localStorage.setItem(`cac-last-inputs_${currentUserId}`, JSON.stringify(item.inputs));
+        }
+        localStorage.setItem('cac-inputs', JSON.stringify(item.inputs));
         localStorage.setItem('cac-last-inputs', JSON.stringify(item.inputs));
       } catch {}
     }
     if (item.output) {
       setData(item.output);
       try {
+        if (currentUserId) {
+          localStorage.setItem(`cac-output_${currentUserId}`, JSON.stringify(item.output));
+        }
         localStorage.setItem('cac-output', JSON.stringify(item.output));
       } catch {}
     }

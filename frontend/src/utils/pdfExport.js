@@ -53,7 +53,7 @@ function bridgeHTML(b) {
   </div></article>`;
 }
 
-export async function exportToPdf(data) {
+export async function buildPdfDocument(data) {
   if (!data || !data.lifeboat || !data.yacht || !data.bridge) {
     throw new Error('Avatar data is incomplete');
   }
@@ -101,10 +101,21 @@ export async function exportToPdf(data) {
 
     const name = ((data.lifeboat?.characterName || 'avatar') + '').split(' ')[1] || 'avatar';
     const filename = `customer-avatars-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
-    pdf.save(filename);
-    return filename;
+    return { pdf, filename };
   } finally {
     sheet.remove();
   }
+}
+
+export async function exportToPdf(data) {
+  const { pdf, filename } = await buildPdfDocument(data);
+  pdf.save(filename);
+  return filename;
+}
+
+export async function generatePdfBase64(data) {
+  const { pdf, filename } = await buildPdfDocument(data);
+  const dataUri = pdf.output('datauristring');
+  return { dataUri, filename };
 }
 

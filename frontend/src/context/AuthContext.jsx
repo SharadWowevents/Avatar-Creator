@@ -57,6 +57,20 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
     localStorage.removeItem('cac-token');
+    localStorage.removeItem('cac-inputs');
+    localStorage.removeItem('cac-output');
+    localStorage.removeItem('cac-last-inputs');
+    localStorage.removeItem('cac-saved-list');
+
+    // Clear any user-specific draft caches in localStorage
+    try {
+      const keys = Object.keys(localStorage);
+      for (const k of keys) {
+        if (k.startsWith('cac-inputs') || k.startsWith('cac-output') || k.startsWith('cac-last') || k.startsWith('cac-cached-')) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch {}
   };
 
   const forgotPassword = async (email) => {

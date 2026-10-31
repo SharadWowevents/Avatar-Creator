@@ -115,18 +115,22 @@ exports.generate = async (req, res) => {
           title: defaultTitle,
         });
 
-        const safeFilename = `${(output.lifeboat?.characterName || 'Customer_Avatar')
-          .replace(/[^a-z0-9]/gi, '_')
-          .toLowerCase()}_dossier.pdf`;
+        if (pdfBuffer) {
+          const safeFilename = `${(output.lifeboat?.characterName || 'Customer_Avatar')
+            .replace(/[^a-z0-9]/gi, '_')
+            .toLowerCase()}_dossier.pdf`;
 
-        emailStatus = await sendAvatarDossierEmail({
-          toEmail,
-          recipientName,
-          pdfBuffer,
-          pdfFilename: safeFilename,
-          lifeboatName: output.lifeboat?.characterName || 'Lifeboat Avatar',
-          yachtName: output.yacht?.characterName || 'Yacht Avatar',
-        });
+          emailStatus = await sendAvatarDossierEmail({
+            toEmail,
+            recipientName,
+            pdfBuffer,
+            pdfFilename: safeFilename,
+            lifeboatName: output.lifeboat?.characterName || 'Lifeboat Avatar',
+            yachtName: output.yacht?.characterName || 'Yacht Avatar',
+          });
+        } else {
+          console.log('[Avatar Generation] Server-side PDF generator deferred to client-rendered visual PDF.');
+        }
       } catch (emailErr) {
         console.error('[Avatar Generation] Email delivery failed:', emailErr.message);
         emailStatus = { success: false, error: emailErr.message };
@@ -159,8 +163,8 @@ exports.getAll = async (req, res) => {
   try {
     if (getStatus()) {
       const query = req.user
-        ? { $or: [{ user: req.user._id }, { user: null }, { isExample: true }] }
-        : {};
+        ? { user: req.user._id }
+        : { isExample: true };
       const avatars = await Avatar.find(query).sort({ createdAt: -1 });
       return res.status(200).json({
         success: true,
@@ -170,8 +174,8 @@ exports.getAll = async (req, res) => {
       });
     } else {
       const list = req.user
-        ? memoryStore.filter(a => !a.user || a.user === req.user._id || a.isExample)
-        : memoryStore;
+        ? memoryStore.filter(a => a.user && a.user.toString() === req.user._id.toString())
+        : [];
       return res.status(200).json({
         success: true,
         count: list.length,
@@ -399,7 +403,7 @@ exports.sendEmail = async (req, res) => {
     return res.status(200).json({
       success: emailResult.success,
       message: emailResult.success
-        ? `Customer avatar email successfully sent to ${toEmail} with BCC to sachin@wowos.in`
+        ? `Customer avatar email successfully `
         : `Email delivery failed: ${emailResult.error || emailResult.message}`,
       email: emailResult,
     });

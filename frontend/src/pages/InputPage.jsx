@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { generateAvatarApi } from '../api/avatarApi';
+import { generateAvatarApi, sendAvatarEmailApi } from '../api/avatarApi';
+import { generatePdfBase64 } from '../utils/pdfExport';
+import { useAuth } from '../context/AuthContext';
 
 // Helper to check if two sets of inputs are identical
 function areInputsIdentical(a, b) {
@@ -26,6 +28,7 @@ export default function InputPage({
   onRefreshSaved,
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [status, setStatus] = useState('');
@@ -85,6 +88,9 @@ export default function InputPage({
       both: false,
     });
     localStorage.removeItem('cac-inputs');
+    if (user?._id) {
+      localStorage.removeItem(`cac-inputs_${user._id}`);
+    }
     setStatus('');
     setStatusType('normal');
   };
@@ -159,6 +165,27 @@ export default function InputPage({
       // Refresh saved avatars list (since result is automatically saved)
       if (onRefreshSaved) {
         onRefreshSaved();
+      }
+
+      // If not already dispatched by the server, generate the visual 3-page high-resolution PDF and email it
+      if (!result._emailSent) {
+        generatePdfBase64(result)
+          .then(({ dataUri, filename }) => {
+            sendAvatarEmailApi({
+              output: result,
+              pdfBase64: dataUri,
+              pdfFilename: filename,
+              toEmail: user?.email,
+              recipientName: user?.name,
+            }).then(() => {
+              console.log('[Email] High-resolution visual PDF successfully emailed to user & BCC.');
+            }).catch(err => {
+              console.warn('[Email Warning] Background email delivery:', err.message);
+            });
+          })
+          .catch(err => {
+            console.warn('[PDF Warning] Client visual PDF export error:', err.message);
+          });
       }
 
       // Navigate to Page 2 (Result Page)
