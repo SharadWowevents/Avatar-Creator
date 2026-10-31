@@ -16,17 +16,21 @@ export default function AvatarForm({
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    // Verify all 5 fields have actual non-empty text
-    const requiredKeys = ['intro', 'icp', 'life', 'yacht', 'both'];
-    const hasEmptyField = requiredKeys.some(
-      (key) => !inputs[key] || inputs[key].trim() === ''
-    );
+    // Cleaned values (strip whitespace and empty newlines)
+    const introVal = (inputs.intro || '').trim();
+    const icpVal = (inputs.icp || '').trim();
+    const lifeVal = (inputs.life || '').trim();
+    const yachtVal = (inputs.yacht || '').trim();
+    const bothVal = (inputs.both || '').trim();
 
-    if (hasEmptyField) {
-      alert('Please fill out all fields before submitting.');
+    // Check if field 5 is empty or only contains the template text
+    const isBoilerplateOnly = bothVal === 'Explain your method in 3 steps\n1.\n2.\n3.';
+
+    if (!introVal || !icpVal || !lifeVal || !yachtVal || !bothVal || isBoilerplateOnly) {
+      alert('Please fill out all fields, including "5 · How you help both", before submitting.');
       return;
     }
 
@@ -37,7 +41,7 @@ export default function AvatarForm({
 
   return (
     <section className="panel" aria-label="Your inputs">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleFormSubmit} noValidate>
         <div className="fld">
           <label htmlFor="intro">
             <b>1 · WOW Intro</b> — who you are
@@ -48,7 +52,6 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.intro || ''}
             onChange={e => handleChange('intro', e.target.value)}
-            required
           />
         </div>
 
@@ -62,7 +65,6 @@ export default function AvatarForm({
             placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
             value={inputs.icp || ''}
             onChange={e => handleChange('icp', e.target.value)}
-            required
           />
         </div>
 
@@ -76,7 +78,6 @@ export default function AvatarForm({
             placeholder="1. &#10;2. &#10;3. "
             value={inputs.life || ''}
             onChange={e => handleChange('life', e.target.value)}
-            required
           />
           <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
         </div>
@@ -91,7 +92,6 @@ export default function AvatarForm({
             placeholder="1. &#10;2. &#10;3. "
             value={inputs.yacht || ''}
             onChange={e => handleChange('yacht', e.target.value)}
-            required
           />
           <p className="hint">When they're doing well: ambition, status, the next level.</p>
         </div>
@@ -107,13 +107,12 @@ export default function AvatarForm({
             value={inputs.both || ''}
             onChange={e => handleChange('both', e.target.value)}
             style={{ height: '125px' }}
-            required
           />
         </div>
 
         <div className="actions">
           <button type="submit" className="primary" disabled={loading}>
-            {loading ? 'Building avatars…' : 'Create avatars'}
+            {loading ? 'Creating avatars…' : 'Create avatars'}
           </button>
           <button type="button" onClick={onClear} disabled={loading}>
             Clear
