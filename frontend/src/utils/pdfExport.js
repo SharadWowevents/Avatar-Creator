@@ -115,7 +115,12 @@ export async function exportToPdf(data) {
 
 export async function generatePdfBase64(data) {
   const { pdf, filename } = await buildPdfDocument(data);
-  const dataUri = pdf.output('datauristring');
-  return { dataUri, filename };
+  const rawUri = pdf.output('datauristring');
+  const cleanBase64 = rawUri.includes('base64,') ? rawUri.split('base64,')[1] : rawUri;
+  return {
+    dataUri: `data:application/pdf;base64,${cleanBase64}`,
+    rawBase64: cleanBase64,
+    filename
+  };
 }
 

@@ -228,12 +228,12 @@ export async function deleteAvatarApi(id) {
   }
 }
 
-export async function sendAvatarEmailApi({ output, pdfBase64, toEmail, recipientName, avatarId }) {
+export async function sendAvatarEmailApi({ output, pdfBase64, pdfFilename, toEmail, recipientName, avatarId }) {
   try {
     const res = await fetch(`${API_BASE}/avatars/send-email`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ output, pdfBase64, toEmail, recipientName, avatarId }),
+      body: JSON.stringify({ output, pdfBase64, pdfFilename, toEmail, recipientName, avatarId }),
       signal: AbortSignal.timeout(20000),
     });
     const data = await res.json();

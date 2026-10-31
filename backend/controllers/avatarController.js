@@ -380,14 +380,22 @@ exports.sendEmail = async (req, res) => {
     }
 
     let pdfBuffer = null;
-    if (pdfBase64) {
-      const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+    if (pdfBase64 && typeof pdfBase64 === 'string') {
+      const cleanBase64 = pdfBase64.includes('base64,')
+        ? pdfBase64.split('base64,')[1].replace(/\s+/g, '')
+        : pdfBase64.replace(/^data:[^,]+,/, '').replace(/\s+/g, '');
       pdfBuffer = Buffer.from(cleanBase64, 'base64');
+
+      // Double check magic header '%PDF' to guarantee validity
+      if (!pdfBuffer || pdfBuffer.length < 10 || pdfBuffer.slice(0, 4).toString() !== '%PDF') {
+        console.warn('[Avatar Email] Decoded base64 does not start with %PDF magic bytes, falling back to server-side PDF generator.');
+        pdfBuffer = await generateAvatarPdfBuffer(dossierData);
+      }
     } else {
       pdfBuffer = await generateAvatarPdfBuffer(dossierData);
     }
 
-    const safeFilename = `${(dossierData.lifeboat?.characterName || 'Customer_Avatar')
+    const safeFilename = req.body.pdfFilename || `${(dossierData.lifeboat?.characterName || 'Customer_Avatar')
       .replace(/[^a-z0-9]/gi, '_')
       .toLowerCase()}_dossier.pdf`;
 
