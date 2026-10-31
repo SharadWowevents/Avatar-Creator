@@ -1,3 +1,4 @@
+
 /* Layout: two-pane workbench — brief on the left, avatar dossier on the right; Lifeboat (signal orange) vs Yacht (sea teal) */
 :root {
   --bg: #eef2f6;
@@ -1167,4 +1168,8 @@ input:focus-visible {
   color: var(--muted);
   margin: 0;
   font-style: italic;
+}
+textarea.input-err {
+  border: 1px solid red;
+  background-color: #fffafa; /* optional subtle red tint */
 }
