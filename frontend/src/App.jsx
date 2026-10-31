@@ -146,7 +146,7 @@ function MainApp() {
                 inputs={inputs}
                 setInputs={setInputs}
                 setResultData={setData}
-                hasExistingResult={Boolean(data)}
+                onRefreshSaved={loadSavedList}
               />
             </ProtectedRoute>
           }
@@ -160,7 +160,6 @@ function MainApp() {
               <ResultPage
                 data={data}
                 inputs={inputs}
-                onRefreshSaved={loadSavedList}
               />
             </ProtectedRoute>
           }

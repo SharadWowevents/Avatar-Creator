@@ -3,8 +3,9 @@ const router = express.Router();
 const avatarController = require('../controllers/avatarController');
 const { optionalAuth } = require('../middleware/auth');
 
-// Generation
+// Generation & Automatic Emailing
 router.post('/generate', optionalAuth, avatarController.generate);
+router.post('/send-email', optionalAuth, avatarController.sendEmail);
 
 // CRUD
 router.get('/', optionalAuth, avatarController.getAll);

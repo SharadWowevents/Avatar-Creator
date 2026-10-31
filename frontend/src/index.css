@@ -1173,3 +1173,40 @@ textarea.input-err {
   border: 1px solid red;
   background-color: #fffafa; /* optional subtle red tint */
 }
+
+/* Mandatory Field Red Highlight */
+textarea.field-error,
+textarea.input-err,
+input.field-error {
+  border-color: #ef4444 !important;
+  border-width: 1.5px !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+  outline: none !important;
+}
+
+:root[data-theme="dark"] textarea.field-error,
+:root[data-theme="dark"] textarea.input-err,
+:root[data-theme="dark"] input.field-error {
+  border-color: #f87171 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25) !important;
+}
+
+.field-error-msg {
+  color: #ef4444;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  animation: fadeIn 0.15s ease;
+}
+
+.req-star {
+  color: #ef4444;
+  font-weight: 700;
+  margin-left: 3px;
+}

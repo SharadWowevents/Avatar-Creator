@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateAvatarApi } from '../api/avatarApi';
 
-export default function InputPage({ inputs, setInputs, setResultData, hasExistingResult }) {
+export default function InputPage({ inputs, setInputs, setResultData, onRefreshSaved }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('normal');
+
+  // Track validation errors for all 5 mandatory fields
+  const [errors, setErrors] = useState({
+    intro: false,
+    icp: false,
+    life: false,
+    yacht: false,
+    both: false,
+  });
 
   // Timer to track elapsed seconds and show estimated remaining time
   useEffect(() => {
@@ -28,6 +37,14 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
       ...prev,
       [field]: value,
     }));
+
+    // If field previously had an error and user starts typing, immediately remove red highlight
+    if (errors[field] && value.trim()) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: false,
+      }));
+    }
   };
 
   const handleClear = () => {
@@ -38,6 +55,13 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
       yacht: '',
       both: '',
     });
+    setErrors({
+      intro: false,
+      icp: false,
+      life: false,
+      yacht: false,
+      both: false,
+    });
     localStorage.removeItem('cac-inputs');
     setStatus('');
     setStatusType('normal');
@@ -45,9 +69,32 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!inputs.intro.trim() || !inputs.icp.trim() || !inputs.life.trim() || !inputs.yacht.trim()) {
+
+    // Validate all 5 mandatory fields
+    const newErrors = {
+      intro: !inputs.intro || !inputs.intro.trim(),
+      icp: !inputs.icp || !inputs.icp.trim(),
+      life: !inputs.life || !inputs.life.trim(),
+      yacht: !inputs.yacht || !inputs.yacht.trim(),
+      both: !inputs.both || !inputs.both.trim(),
+    };
+
+    setErrors(newErrors);
+
+    const hasBlankField = Object.values(newErrors).some(Boolean);
+    if (hasBlankField) {
       setStatusType('error');
-      setStatus('Fill in the intro, ICP, Lifeboat, and Yacht fields to create avatars.');
+      setStatus('All 5 fields are mandatory. Please fill in the required fields highlighted in red.');
+
+      // Automatically focus and scroll to the first blank field
+      const firstBlankField = Object.keys(newErrors).find(key => newErrors[key]);
+      if (firstBlankField) {
+        const el = document.getElementById(firstBlankField);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
 
@@ -61,6 +108,11 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
       try {
         localStorage.setItem('cac-output', JSON.stringify(result));
       } catch {}
+
+      // Refresh saved avatars list (since result is automatically saved)
+      if (onRefreshSaved) {
+        onRefreshSaved();
+      }
 
       // Navigate to Page 2 (Result Page)
       navigate('/result');
@@ -84,100 +136,114 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             We will craft two vivid animal-character avatars and a roadmap to serve both.
           </p>
         </div>
-
-        {hasExistingResult && !loading && (
-          <button
-            type="button"
-            className="btn-subtle"
-            style={{ fontWeight: 600 }}
-            onClick={() => navigate('/result')}
-          >
-            View Current Result →
-          </button>
-        )}
       </div>
 
       <div className="input-card panel">
-        <form onSubmit={handleSubmit} id="f">
+        <form onSubmit={handleSubmit} id="f" noValidate>
+          {/* Field 1 */}
           <div className="fld">
             <label htmlFor="intro">
-              <b>1 · WOW INTRO</b> — WHO YOU ARE
+              <b>1 · WOW INTRO</b> — WHO YOU ARE <span className="req-star">*</span>
             </label>
             <textarea
               id="intro"
               rows={3}
+              className={errors.intro ? 'field-error' : ''}
               placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
               value={inputs.intro}
               onChange={e => handleChange('intro', e.target.value)}
               disabled={loading}
             />
+            {errors.intro && (
+              <span className="field-error-msg">⚠️ This field is required. Please provide your WOW Intro.</span>
+            )}
           </div>
 
+          {/* Field 2 */}
           <div className="fld">
             <label htmlFor="icp">
-              <b>2 · ICP</b> — IDEAL CUSTOMER PROFILE
+              <b>2 · ICP</b> — IDEAL CUSTOMER PROFILE <span className="req-star">*</span>
             </label>
             <textarea
               id="icp"
               rows={3}
+              className={errors.icp ? 'field-error' : ''}
               placeholder="Target Role/Designation, Company Size, Industry, Location, KRA, KPI, Age, Education, Interest, Hobbies, Lifestyle, Life Goals Etc"
               value={inputs.icp}
               onChange={e => handleChange('icp', e.target.value)}
               disabled={loading}
             />
+            {errors.icp && (
+              <span className="field-error-msg">⚠️ This field is required. Please provide your Ideal Customer Profile.</span>
+            )}
           </div>
 
+          {/* Field 3 */}
           <div className="fld">
             <label htmlFor="life" className="l">
-              <b>3 · AS A LIFEBOAT</b> — TOP 3 ISSUES YOU SOLVE
+              <b>3 · AS A LIFEBOAT</b> — TOP 3 ISSUES YOU SOLVE <span className="req-star">*</span>
             </label>
             <textarea
               id="life"
               rows={4}
+              className={errors.life ? 'field-error' : ''}
               placeholder="1. &#10;2. &#10;3. "
               value={inputs.life}
               onChange={e => handleChange('life', e.target.value)}
               disabled={loading}
             />
             <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
+            {errors.life && (
+              <span className="field-error-msg">⚠️ This field is required. Please list the top 3 Lifeboat issues you solve.</span>
+            )}
           </div>
 
+          {/* Field 4 */}
           <div className="fld">
             <label htmlFor="yacht" className="y">
-              <b>4 · AS A YACHT</b> — TOP 3 ISSUES YOU SOLVE
+              <b>4 · AS A YACHT</b> — TOP 3 ISSUES YOU SOLVE <span className="req-star">*</span>
             </label>
             <textarea
               id="yacht"
               rows={4}
+              className={errors.yacht ? 'field-error' : ''}
               placeholder="1. &#10;2. &#10;3. "
               value={inputs.yacht}
               onChange={e => handleChange('yacht', e.target.value)}
               disabled={loading}
             />
             <p className="hint">When they're doing well: ambition, status, the next level.</p>
+            {errors.yacht && (
+              <span className="field-error-msg">⚠️ This field is required. Please list the top 3 Yacht issues you solve.</span>
+            )}
           </div>
 
+          {/* Field 5 */}
           <div className="fld">
             <label htmlFor="both">
-              <b>5 · HOW YOU HELP BOTH</b>
+              <b>5 · HOW YOU HELP BOTH</b> <span className="req-star">*</span>
             </label>
             <textarea
               id="both"
               rows={3}
+              className={errors.both ? 'field-error' : ''}
               placeholder="Explain your method in 3 steps&#10;1. &#10;2. &#10;3. "
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
               disabled={loading}
               style={{ height: '125px' }}
             />
+            {errors.both && (
+              <span className="field-error-msg">⚠️ This field is required. Please explain how you help both buyer types.</span>
+            )}
           </div>
- 
+
           <div className="actions">
             <button type="submit" className="primary" id="go" disabled={loading}>
               {loading ? (
                 <>
                   <span className="dot" style={{ width: 6, height: 6 }} />
-                  Creating avatars… 
+                  Creating avatars…
                 </>
               ) : (
                 'Create avatars'

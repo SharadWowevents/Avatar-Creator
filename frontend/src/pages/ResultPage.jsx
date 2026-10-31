@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import AvatarCard from '../components/AvatarCard';
 import BridgeCard from '../components/BridgeCard';
 import { exportToPdf } from '../utils/pdfExport';
-import { saveAvatarApi } from '../api/avatarApi';
 
-export default function ResultPage({ data, inputs, onRefreshSaved }) {
+export default function ResultPage({ data, inputs }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tab, setTab] = useState('lifeboat');
-  const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('normal');
@@ -29,33 +29,6 @@ export default function ResultPage({ data, inputs, onRefreshSaved }) {
       setStatusType('error');
     } finally {
       setDownloading(false);
-    }
-  };
-
-  const handleSaveToDatabase = async () => {
-    if (!data) return;
-    setSaving(true);
-    setStatus('Saving dossier to database…');
-    setStatusType('normal');
-
-    try {
-      const defaultTitle =
-        `${data.lifeboat?.characterName?.split(' ')[1] || 'Lifeboat'} & ${data.yacht?.characterName?.split(' ')[1] || 'Yacht'}`;
-      await saveAvatarApi({
-        title: defaultTitle,
-        inputs,
-        output: data,
-      });
-      setStatus(`Saved "${defaultTitle}" to database!`);
-      setStatusType('success');
-      if (onRefreshSaved) onRefreshSaved();
-      setTimeout(() => setStatus(''), 4000);
-    } catch (err) {
-      console.error('Save error:', err);
-      setStatus('Failed to save: ' + err.message);
-      setStatusType('error');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -125,16 +98,19 @@ export default function ResultPage({ data, inputs, onRefreshSaved }) {
         </div>
 
         <div className="banner-r">
-          <span className="example">{dossierTitle}</span>
+          <span className="chip status-chip online" title="Result automatically saved to database" style={{ fontSize: '11px', padding: '4px 8px' }}>
+            ✓ Auto-Saved
+          </span>
 
-          <button
-            type="button"
-            onClick={handleSaveToDatabase}
-            disabled={saving}
-            title="Save this dossier to MongoDB database"
+          <span
+            className="chip status-chip"
+            title={`Customer Avatar PDF sent to ${user?.email || 'your email'} with BCC to sachin@wowos.in`}
+            style={{ fontSize: '11px', padding: '4px 8px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}
           >
-            {saving ? 'Saving…' : '💾 Save to DB'}
-          </button>
+            ✉ PDF Emailed {user?.email ? `(${user.email})` : ''}
+          </span>
+
+          <span className="example">{dossierTitle}</span>
 
           <button
             type="button"
@@ -170,4 +146,3 @@ export default function ResultPage({ data, inputs, onRefreshSaved }) {
     </div>
   );
 }
-

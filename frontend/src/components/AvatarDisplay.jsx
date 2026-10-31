@@ -9,8 +9,6 @@ export default function AvatarDisplay({
   setTab,
   loading,
   exampleLabel,
-  onSaveToDatabase,
-  saving,
 }) {
   const [downloading, setDownloading] = useState(false);
   const [pdfStatus, setPdfStatus] = useState('');
@@ -69,17 +67,6 @@ export default function AvatarDisplay({
           <span className="example" id="exlabel">
             {exampleLabel}
           </span>
-
-          {data && (
-            <button
-              type="button"
-              onClick={onSaveToDatabase}
-              disabled={saving || loading}
-              title="Save current avatar dossier to MongoDB"
-            >
-              {saving ? 'Saving…' : '💾 Save to DB'}
-            </button>
-          )}
 
           <button
             type="button"

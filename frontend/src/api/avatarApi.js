@@ -43,7 +43,7 @@ export async function generateAvatarApi(inputs) {
 
     // Heuristic client fallback derived dynamically from user inputs
     const brandName = (inputs.intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates)|\b)/i) || [])[1] || 'Your business';
-    return {
+    const fallbackOutput = {
       lifeboat: {
         characterName: "Rescue Rachel the Restless Rabbit",
         animal: "Rabbit",
@@ -127,6 +127,22 @@ export async function generateAvatarApi(inputs) {
         message: `${brandName} gets you from the emergency lifeboat to the luxury yacht.`
       }
     };
+
+    // Auto-save fallback in local storage
+    try {
+      const local = JSON.parse(localStorage.getItem('cac-saved-list') || '[]');
+      const defaultTitle = `${fallbackOutput.lifeboat.characterName.split(' ')[1]} & ${fallbackOutput.yacht.characterName.split(' ')[1]}`;
+      local.unshift({
+        _id: 'local-' + Date.now(),
+        title: defaultTitle,
+        inputs,
+        output: fallbackOutput,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('cac-saved-list', JSON.stringify(local));
+    } catch {}
+
+    return fallbackOutput;
   }
 }
 
@@ -194,6 +210,25 @@ export async function deleteAvatarApi(id) {
     return true;
   } catch (err) {
     console.error('Delete failed:', err);
+    throw err;
+  }
+}
+
+export async function sendAvatarEmailApi({ output, pdfBase64, toEmail, recipientName, avatarId }) {
+  try {
+    const res = await fetch(`${API_BASE}/avatars/send-email`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ output, pdfBase64, toEmail, recipientName, avatarId }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to send email');
+    }
+    return data;
+  } catch (err) {
+    console.warn('sendAvatarEmailApi failed:', err);
     throw err;
   }
 }

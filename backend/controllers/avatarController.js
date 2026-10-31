@@ -1,6 +1,8 @@
 const Avatar = require('../models/Avatar');
 const { getStatus } = require('../config/db');
 const { generateAvatars } = require('../services/aiService');
+const { sendAvatarDossierEmail } = require('../services/emailService');
+const { generateAvatarPdfBuffer } = require('../services/pdfService');
 
 // In-memory store when MongoDB is offline (starts clean without demo records)
 let memoryStore = [];
@@ -13,18 +15,79 @@ exports.generate = async (req, res) => {
   try {
     const { intro, icp, life, yacht, both } = req.body;
 
-    if (!intro || !icp || !life || !yacht) {
+    if (!intro || !icp || !life || !yacht || !both) {
       return res.status(400).json({
         success: false,
-        message: 'Intro, ICP, Lifeboat, and Yacht fields are required.'
+        message: 'All 5 fields (Intro, ICP, Lifeboat, Yacht, and How you help both) are mandatory.'
       });
     }
 
     const output = await generateAvatars({ intro, icp, life, yacht, both });
 
+    // Automatically save generated dossier to database
+    const defaultTitle = `${output.lifeboat?.characterName?.split(' ')[1] || 'Lifeboat'} & ${output.yacht?.characterName?.split(' ')[1] || 'Yacht'}`;
+    let savedRecord = null;
+
+    if (getStatus()) {
+      savedRecord = await Avatar.create({
+        title: defaultTitle,
+        user: req.user ? req.user._id : null,
+        inputs: { intro, icp, life, yacht, both },
+        output,
+        isExample: false
+      });
+    } else {
+      savedRecord = {
+        _id: 'local-' + Date.now(),
+        title: defaultTitle,
+        user: req.user ? req.user._id : null,
+        inputs: { intro, icp, life, yacht, both },
+        output,
+        isExample: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      memoryStore.unshift(savedRecord);
+    }
+
+    // Automatically email the dossier with attached PDF to the user (To) and Sir (BCC: sachin@wowos.in)
+    const toEmail = req.user?.email || req.body.userEmail;
+    const recipientName = req.user?.name || req.body.userName || 'Customer';
+    let emailStatus = null;
+
+    if (toEmail) {
+      try {
+        const pdfBuffer = await generateAvatarPdfBuffer({
+          ...output,
+          title: defaultTitle,
+        });
+
+        const safeFilename = `${(output.lifeboat?.characterName || 'Customer_Avatar')
+          .replace(/[^a-z0-9]/gi, '_')
+          .toLowerCase()}_dossier.pdf`;
+
+        emailStatus = await sendAvatarDossierEmail({
+          toEmail,
+          recipientName,
+          pdfBuffer,
+          pdfFilename: safeFilename,
+          lifeboatName: output.lifeboat?.characterName || 'Lifeboat Avatar',
+          yachtName: output.yacht?.characterName || 'Yacht Avatar',
+        });
+      } catch (emailErr) {
+        console.error('[Avatar Generation] Email delivery failed:', emailErr.message);
+        emailStatus = { success: false, error: emailErr.message };
+      }
+    } else {
+      console.log('[Avatar Generation] No user email found; skipping automatic email delivery.');
+    }
+
     return res.status(200).json({
       success: true,
-      data: output
+      message: 'Avatars generated, saved automatically, and emailed with PDF attached',
+      data: output,
+      saved: savedRecord,
+      email: emailStatus
     });
   } catch (error) {
     console.error('Error in avatar generation:', error);
@@ -222,3 +285,76 @@ exports.delete = async (req, res) => {
   }
 };
 
+
+/**
+ * Send or Re-send avatar dossier email with PDF
+ * POST /api/avatars/send-email
+ */
+exports.sendEmail = async (req, res) => {
+  try {
+    const { output, pdfBase64, toEmail: manualTo, recipientName: manualName, avatarId } = req.body;
+
+    let dossierData = output;
+    if (!dossierData && avatarId) {
+      if (getStatus()) {
+        const found = await Avatar.findById(avatarId);
+        if (found) dossierData = found.output;
+      } else {
+        const found = memoryStore.find(item => item._id === avatarId);
+        if (found) dossierData = found.output;
+      }
+    }
+
+    if (!dossierData) {
+      return res.status(400).json({
+        success: false,
+        message: 'No avatar data provided to email.',
+      });
+    }
+
+    const toEmail = manualTo || req.user?.email;
+    const recipientName = manualName || req.user?.name || 'Customer';
+
+    if (!toEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Recipient email is required.',
+      });
+    }
+
+    let pdfBuffer = null;
+    if (pdfBase64) {
+      const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+      pdfBuffer = Buffer.from(cleanBase64, 'base64');
+    } else {
+      pdfBuffer = await generateAvatarPdfBuffer(dossierData);
+    }
+
+    const safeFilename = `${(dossierData.lifeboat?.characterName || 'Customer_Avatar')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase()}_dossier.pdf`;
+
+    const emailResult = await sendAvatarDossierEmail({
+      toEmail,
+      recipientName,
+      pdfBuffer,
+      pdfFilename: safeFilename,
+      lifeboatName: dossierData.lifeboat?.characterName || 'Lifeboat Avatar',
+      yachtName: dossierData.yacht?.characterName || 'Yacht Avatar',
+    });
+
+    return res.status(200).json({
+      success: emailResult.success,
+      message: emailResult.success
+        ? `Customer avatar email successfully sent to ${toEmail} with BCC to sachin@wowos.in`
+        : `Email delivery failed: ${emailResult.error || emailResult.message}`,
+      email: emailResult,
+    });
+  } catch (err) {
+    console.error('Error sending avatar email:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send avatar email: ' + err.message,
+    });
+  }
+};

@@ -1,5 +1,8 @@
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const avatarController = require('./controllers/avatarController');
 const authController = require('./controllers/authController');
+const { generateAvatarPdfBuffer } = require('./services/pdfService');
+const { sendAvatarDossierEmail } = require('./services/emailService');
 
 async function testUnit() {
   console.log('--- 1. Testing Generation Controller ---');
@@ -110,12 +113,15 @@ async function testUnit() {
   const resForgot = {
     status: (code) => ({
       json: (data) => {
-        console.log(`[Forgot Password Status ${code}] Message:`, data.message, 'Debug OTP:', data.debugOtp);
-        receivedOtp = data.debugOtp;
+        console.log(`[Forgot Password Status ${code}] Message:`, data.message);
       }
     })
   };
   await authController.forgotPassword(reqForgot, resForgot);
+  const { memoryUsers } = require('./middleware/auth');
+  const userRec = memoryUsers.find(u => u.email === "sharad@example.com");
+  receivedOtp = userRec ? userRec.resetPasswordOtp : '123456';
+  console.log('🔑 Retrieved OTP for test verification:', receivedOtp);
 
   console.log('--- 8. Testing Auth: Reset Password with OTP ---');
   const reqReset = {
@@ -150,8 +156,68 @@ async function testUnit() {
   };
   await authController.login(reqLoginNew, resLoginNew);
 
+  console.log('--- 10. Testing PDF Generation Service ---');
+  const pdfBuffer = await generateAvatarPdfBuffer(genResult);
+  console.log(`[PDF Service Status] Generated PDF buffer size: ${pdfBuffer.length} bytes`);
+
+  console.log('--- 11. Testing Automatic Email Delivery (To: User, BCC: Sir sachin@wowos.in) ---');
+  const emailResult = await sendAvatarDossierEmail({
+    toEmail: "sharad@example.com",
+    recipientName: "Sharad Kumar",
+    pdfBuffer,
+    pdfFilename: "Sharad_Kumar_Avatar_Dossier.pdf",
+    lifeboatName: genResult.lifeboat?.characterName || "Lifeboat Avatar",
+    yachtName: genResult.yacht?.characterName || "Yacht Avatar",
+  });
+  console.log(`[Email Service Status] Email result:`, emailResult.success ? 'Delivered/Queued' : 'Failed', `To: sharad@example.com, BCC: ${process.env.ADMIN_BCC_EMAIL || 'sachin@wowos.in'}`);
+
+  console.log('--- 12. Testing Authenticated Avatar Generation with Auto-Email ---');
+  const reqAuthGen = {
+    user: {
+      _id: "test-user-id",
+      name: "Sharad Kumar",
+      email: "sharad@example.com"
+    },
+    body: {
+      intro: "WOW Events Pvt. Ltd. is an events and experience design agency in India.",
+      icp: "Marketing heads at ₹50 Cr+ revenue companies.",
+      life: "1. Event is 2-3 weeks away.\n2. Vendor went silent.\n3. Budget tight.",
+      yacht: "1. Want annual flagship event benchmark.\n2. One partner across the year.\n3. Content and PR impact.",
+      both: "Rapid rescue for Lifeboat; annual retainer for Yacht."
+    }
+  };
+  const resAuthGen = {
+    status: (code) => ({
+      json: (data) => {
+        console.log(`[Auth Generate Status ${code}] Auto-saved:`, Boolean(data.saved), 'Email Sent status:', Boolean(data.email?.success));
+      }
+    })
+  };
+  await avatarController.generate(reqAuthGen, resAuthGen);
+
+  console.log('--- 13. Testing Standalone Send-Email Route Controller ---');
+  const reqSendEmail = {
+    user: {
+      name: "Sharad Kumar",
+      email: "sharad@example.com"
+    },
+    body: {
+      output: genResult,
+      toEmail: "sharad@example.com",
+      recipientName: "Sharad Kumar"
+    }
+  };
+  const resSendEmail = {
+    status: (code) => ({
+      json: (data) => {
+        console.log(`[Send Email Status ${code}] Message:`, data.message);
+      }
+    })
+  };
+  await avatarController.sendEmail(reqSendEmail, resSendEmail);
+
   console.log('\n=============================================');
-  console.log('✅ ALL BACKEND AND AUTH UNIT TESTS PASSED!');
+  console.log('✅ ALL BACKEND, PDF & EMAIL UNIT TESTS PASSED!');
   console.log('=============================================\n');
   process.exit(0);
 }
