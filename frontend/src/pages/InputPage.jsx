@@ -106,7 +106,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="intro"
               rows={3}
-              placeholder="Describe who you are, what your business does, and the services or products you deliver..."
+              placeholder="Target Role/Designation, Company Size, Industry, Location, KRA, KPI, Age, Education, Interest, Hobbies, Lifestyle, Life Goals Etc."
               value={inputs.intro}
               onChange={e => handleChange('intro', e.target.value)}
               disabled={loading}
@@ -134,7 +134,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="life"
               rows={4}
-              placeholder="1. Urgent deadline or crisis scenario they face right now...&#10;2. High-friction pain point that puts their credibility on the line...&#10;3. Critical risk or budget limitation they cannot afford to compromise..."
+              placeholder="1. &#10;2. &#10;3. "
               value={inputs.life}
               onChange={e => handleChange('life', e.target.value)}
               disabled={loading}
@@ -149,7 +149,7 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="yacht"
               rows={4}
-              placeholder="1. High-level ambition, status, or market benchmark they want to reach...&#10;2. Streamlined partnership or scaling goal to replace fragmented efforts...&#10;3. Transformational outcome that creates long-term value and prestige..."
+              placeholder="1. &#10;2. &#10;3. "
               value={inputs.yacht}
               onChange={e => handleChange('yacht', e.target.value)}
               disabled={loading}
@@ -164,13 +164,13 @@ export default function InputPage({ inputs, setInputs, setResultData, hasExistin
             <textarea
               id="both"
               rows={3}
-              placeholder="How your business uniquely serves both emergency rescues and strategic partnerships..."
+              placeholder="Explain your method in 3 steps:&#10;1. &#10;2. &#10;3. "
               value={inputs.both}
               onChange={e => handleChange('both', e.target.value)}
               disabled={loading}
             />
           </div>
-
+ 
           <div className="actions">
             <button type="submit" className="primary" id="go" disabled={loading}>
               {loading ? (
