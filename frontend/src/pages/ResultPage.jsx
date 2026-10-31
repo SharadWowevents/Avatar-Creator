@@ -29,7 +29,7 @@ export default function ResultPage({ data, inputs }) {
         toEmail: user?.email,
         recipientName: user?.name,
       });
-      setStatus(`✓ PDF email successfully sent to ${user?.email || 'your email'} (BCC: sachin@wowos.in)!`);
+      setStatus(`✓ PDF email successfully sent to ${user?.email || 'your email'}!`);
       setStatusType('success');
       setTimeout(() => setStatus(''), 5000);
     } catch (err) {
@@ -132,7 +132,7 @@ export default function ResultPage({ data, inputs }) {
 
           <span
             className="chip status-chip"
-            title={`Customer Avatar PDF sent to ${user?.email || 'your email'} with BCC to sachin@wowos.in`}
+            title={`Customer Avatar PDF sent to ${user?.email || 'your email'}`}
             style={{ fontSize: '11px', padding: '4px 8px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}
           >
             ✉ PDF Emailed {user?.email ? `(${user.email})` : ''}
