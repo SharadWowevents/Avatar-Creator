@@ -1,115 +1,110 @@
-limport React from 'react';
+import React, { useState } from 'react';
 
-export default function AvatarForm({
-  inputs,
-  setInputs,
-  onSubmit,
-  onClear,
-  loading,
-  status,
-  statusType,
-}) {
-  const handleChange = (field, value) => {
-    setInputs(prev => ({
-      ...prev,
-      [field]: value,
+const AvatarForm = ({ onSubmit }) => {
+  // State for all 5 form fields
+  const [formData, setFormData] = useState({
+    fieldOne: '',
+    fieldTwo: '',
+    fieldThree: '',
+    fieldFour: '',
+    fieldFive: '', 
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
     }));
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault(); 
+    
+    if (onSubmit) {
+      onSubmit(formData);
+    }
+  };
+
   return (
-    <section className="panel" aria-label="Your inputs">
-      <form onSubmit={onSubmit}>
-        <div className="fld">
-          <label htmlFor="intro">
-            <b>1 · WOW Intro</b> — who you are
-          </label>
-          <textarea
-            id="intro"
-            rows={3}
-            placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
-            value={inputs.intro}
-            onChange={e => handleChange('intro', e.target.value)}
-            required
+    <div className="avatar-form-container">
+      <h2>Create Your Avatar</h2>
+      
+      {/* Rely on form onSubmit to trigger HTML5 required validation */}
+      <form onSubmit={handleSubmit}>
+        
+        {/* Field 1 - Mandatory */}
+        <div className="form-group">
+          <label htmlFor="fieldOne">Field 1:</label>
+          <input
+            type="text"
+            id="fieldOne"
+            name="fieldOne"
+            value={formData.fieldOne}
+            onChange={handleChange}
+            required 
           />
         </div>
 
-        <div className="fld">
-          <label htmlFor="icp">
-            <b>2 · ICP</b> — ideal customer profile
-          </label>
-          <textarea
-            id="icp"
-            rows={3}
-            placeholder="I help [ One Person - Designation/Role ] achieve [ Tangible Outcome ] by [ Your Solution - Product / Service ] through [ Your Method/Framework Name ]"
-            value={inputs.icp}
-            onChange={e => handleChange('icp', e.target.value)}
-            required
+        {/* Field 2 - Mandatory */}
+        <div className="form-group">
+          <label htmlFor="fieldTwo">Field 2:</label>
+          <input
+            type="email"
+            id="fieldTwo"
+            name="fieldTwo"
+            value={formData.fieldTwo}
+            onChange={handleChange}
+            required 
           />
         </div>
 
-        <div className="fld">
-          <label htmlFor="life" className="l">
-            <b>3 · As a Lifeboat</b> — top 3 issues you solve
-          </label>
-          <textarea
-            id="life"
-            rows={4}
-            placeholder="1. &#10;2. &#10;3. "
-            value={inputs.life}
-            onChange={e => handleChange('life', e.target.value)}
-            required
-          />
-          <p className="hint">When they're sinking: urgent, painful, needs rescue now.</p>
+        {/* Field 3 - Mandatory */}
+        <div className="form-group">
+          <label htmlFor="fieldThree">Field 3:</label>
+          <select
+            id="fieldThree"
+            name="fieldThree"
+            value={formData.fieldThree}
+            onChange={handleChange}
+            required 
+          >
+            <option value="" disabled>Select option...</option>
+            <option value="option1">Option 1</option>
+            <option value="option2">Option 2</option>
+          </select>
         </div>
 
-        <div className="fld">
-          <label htmlFor="yacht" className="y">
-            <b>4 · As a Yacht</b> — top 3 issues you solve
-          </label>
-          <textarea
-            id="yacht"
-            rows={4}
-            placeholder="1. &#10;2. &#10;3. "
-            value={inputs.yacht}
-            onChange={e => handleChange('yacht', e.target.value)}
-            required
-          />
-          <p className="hint">When they're doing well: ambition, status, the next level.</p>
-        </div>
-
-        <div className="fld">
-          <label htmlFor="both">
-            <b>5 · How you help both</b>
-          </label>
-          <textarea
-            id="both"
-            rows={3}
-            placeholder="Explain your method in 3 steps:&#10;1. &#10;2. &#10;3. "
-            value={inputs.both}
-            onChange={e => handleChange('both', e.target.value)}
-            style={{ height: '125px' }}
-            required
+        {/* Field 4 - Mandatory */}
+        <div className="form-group">
+          <label htmlFor="fieldFour">Field 4:</label>
+          <input
+            type="color"
+            id="fieldFour"
+            name="fieldFour"
+            value={formData.fieldFour}
+            onChange={handleChange}
+            required 
           />
         </div>
 
-        <div className="actions">
-          <button type="submit" className="primary" disabled={loading}>
-            {loading ? 'Building avatars…' : 'Create avatars'}
-          </button>
-          <button type="button" onClick={onClear} disabled={loading}>
-            Clear
-          </button>
+        {/* Field 5 - Mandatory */}
+        <div className="form-group">
+          <label htmlFor="fieldFive">Field 5 (The Missing Field):</label>
+          <input
+            type="text"
+            id="fieldFive"
+            name="fieldFive"
+            value={formData.fieldFive}
+            onChange={handleChange}
+            required 
+          />
         </div>
 
-        <p
-          className={`status ${
-            statusType === 'error' ? 'err' : statusType === 'success' ? 'success' : ''
-          }`}
-          role="status"
-        >
-          {status}
-        </p>
+        <button type="submit">Generate Avatar</button>
       </form>
-    </section>
+    </div>
   );
-}
+};
+
+export default AvatarForm;
