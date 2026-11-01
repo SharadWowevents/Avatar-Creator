@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AvatarCard from '../components/AvatarCard';
 import BridgeCard from '../components/BridgeCard';
-import { exportToPdf, generatePdfBase64 } from '../utils/pdfExport';
-import { sendAvatarEmailApi } from '../api/avatarApi';
+import { exportToPdf } from '../utils/pdfExport';
+import { sendAvatarEmailApi, downloadAvatarPdfApi } from '../api/avatarApi';
 
 export default function ResultPage({ data, inputs }) {
   const navigate = useNavigate();
@@ -21,11 +21,8 @@ export default function ResultPage({ data, inputs }) {
       setEmailing(true);
       setStatus('Generating high-resolution visual PDF and sending email…');
       setStatusType('normal');
-      const { dataUri, filename } = await generatePdfBase64(data);
       await sendAvatarEmailApi({
         output: data,
-        pdfBase64: dataUri,
-        pdfFilename: filename,
         toEmail: user?.email,
         recipientName: user?.name,
       });
@@ -45,9 +42,14 @@ export default function ResultPage({ data, inputs }) {
     if (!data) return;
     try {
       setDownloading(true);
-      setStatus('Preparing PDF…');
+      setStatus('Preparing high-resolution PDF…');
       setStatusType('normal');
-      await exportToPdf(data);
+      try {
+        await downloadAvatarPdfApi({ output: data });
+      } catch {
+        // Fallback to client-side PDF renderer if server download endpoint is unreachable
+        await exportToPdf(data);
+      }
       setStatus('PDF downloaded successfully!');
       setStatusType('success');
       setTimeout(() => setStatus(''), 3000);

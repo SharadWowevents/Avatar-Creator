@@ -6,6 +6,7 @@ const { optionalAuth } = require('../middleware/auth');
 // Generation & Automatic Emailing
 router.post('/generate', optionalAuth, avatarController.generate);
 router.post('/send-email', optionalAuth, avatarController.sendEmail);
+router.post('/download-pdf', optionalAuth, avatarController.downloadPdf);
 
 // CRUD
 router.get('/', optionalAuth, avatarController.getAll);

@@ -287,3 +287,31 @@ export async function sendAvatarEmailApi({ output, pdfBase64, pdfFilename, toEma
     throw err;
   }
 }
+
+export async function downloadAvatarPdfApi({ output }) {
+  try {
+    const res = await fetch(`${API_BASE}/avatars/download-pdf`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ output }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const name = ((output?.lifeboat?.characterName || 'avatar') + '').split(' ')[1] || 'avatar';
+    a.download = `customer-avatars-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (err) {
+    console.warn('Server downloadPdf failed, falling back to client jsPDF:', err);
+    throw err;
+  }
+}

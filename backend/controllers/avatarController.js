@@ -380,19 +380,24 @@ exports.sendEmail = async (req, res) => {
     }
 
     let pdfBuffer = null;
-    if (pdfBase64 && typeof pdfBase64 === 'string') {
+    // Always prefer pristine vector PDF generated directly from dossier data
+    if (dossierData) {
+      try {
+        pdfBuffer = await generateAvatarPdfBuffer(dossierData);
+      } catch (err) {
+        console.warn('[Avatar Email] Server PDF generator error, falling back:', err.message);
+      }
+    }
+
+    // Fallback to client-provided base64 only if server-side generator failed or was unavailable
+    if (!pdfBuffer && pdfBase64 && typeof pdfBase64 === 'string') {
       const cleanBase64 = pdfBase64.includes('base64,')
         ? pdfBase64.split('base64,')[1].replace(/\s+/g, '')
         : pdfBase64.replace(/^data:[^,]+,/, '').replace(/\s+/g, '');
-      pdfBuffer = Buffer.from(cleanBase64, 'base64');
-
-      // Double check magic header '%PDF' to guarantee validity
-      if (!pdfBuffer || pdfBuffer.length < 10 || pdfBuffer.slice(0, 4).toString() !== '%PDF') {
-        console.warn('[Avatar Email] Decoded base64 does not start with %PDF magic bytes, falling back to server-side PDF generator.');
-        pdfBuffer = await generateAvatarPdfBuffer(dossierData);
+      const decoded = Buffer.from(cleanBase64, 'base64');
+      if (decoded && decoded.length > 50 && decoded.slice(0, 4).toString() === '%PDF') {
+        pdfBuffer = decoded;
       }
-    } else {
-      pdfBuffer = await generateAvatarPdfBuffer(dossierData);
     }
 
     const safeFilename = req.body.pdfFilename || `${(dossierData.lifeboat?.characterName || 'Customer_Avatar')
@@ -411,7 +416,7 @@ exports.sendEmail = async (req, res) => {
     return res.status(200).json({
       success: emailResult.success,
       message: emailResult.success
-        ? `Customer avatar email successfully `
+        ? `Customer avatar email successfully sent`
         : `Email delivery failed: ${emailResult.error || emailResult.message}`,
       email: emailResult,
     });
@@ -421,5 +426,31 @@ exports.sendEmail = async (req, res) => {
       success: false,
       message: 'Failed to send avatar email: ' + err.message,
     });
+  }
+};
+
+/**
+ * Download vector PDF directly
+ * POST /api/avatars/download-pdf
+ */
+exports.downloadPdf = async (req, res) => {
+  try {
+    const { output } = req.body;
+    if (!output) {
+      return res.status(400).json({ success: false, message: 'No avatar data provided for PDF download.' });
+    }
+    const pdfBuffer = await generateAvatarPdfBuffer(output);
+    if (!pdfBuffer) {
+      return res.status(500).json({ success: false, message: 'Server PDF generation unavailable.' });
+    }
+    const safeFilename = `${(output.lifeboat?.characterName || 'Customer_Avatar')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase()}_dossier.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Error downloading avatar PDF:', err);
+    return res.status(500).json({ success: false, message: 'Failed to generate PDF: ' + err.message });
   }
 };

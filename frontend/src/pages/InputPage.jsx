@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateAvatarApi, sendAvatarEmailApi } from '../api/avatarApi';
-import { generatePdfBase64 } from '../utils/pdfExport';
 import { useAuth } from '../context/AuthContext';
 
 // Helper to check if two sets of inputs are identical
@@ -167,25 +166,17 @@ export default function InputPage({
         onRefreshSaved();
       }
 
-      // If not already dispatched by the server, generate the visual 3-page high-resolution PDF and email it
-      if (!result._emailSent) {
-        generatePdfBase64(result)
-          .then(({ dataUri, filename }) => {
-            sendAvatarEmailApi({
-              output: result,
-              pdfBase64: dataUri,
-              pdfFilename: filename,
-              toEmail: user?.email,
-              recipientName: user?.name,
-            }).then(() => {
-              console.log('[Email] High-resolution visual PDF successfully emailed to user & BCC.');
-            }).catch(err => {
-              console.warn('[Email Warning] Background email delivery:', err.message);
-            });
-          })
-          .catch(err => {
-            console.warn('[PDF Warning] Client visual PDF export error:', err.message);
-          });
+      // If not already dispatched by the server, dispatch background email with full PDF dossier
+      if (!result._emailSent && user?.email) {
+        sendAvatarEmailApi({
+          output: result,
+          toEmail: user.email,
+          recipientName: user.name,
+        }).then(() => {
+          console.log('[Email] Avatar dossier successfully emailed to user & BCC.');
+        }).catch(err => {
+          console.warn('[Email Warning] Background email delivery:', err.message);
+        });
       }
 
       // Navigate to Page 2 (Result Page)
