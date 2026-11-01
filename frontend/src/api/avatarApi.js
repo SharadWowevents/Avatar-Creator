@@ -54,90 +54,131 @@ export async function generateAvatarApi(inputs) {
       }
     } catch {}
 
-    // Heuristic client fallback derived dynamically from user inputs
+    // Heuristic client fallback derived dynamically from user inputs using multi-archetype variety
     const brandName = (inputs.intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates)|\b)/i) || [])[1] || 'Your business';
+    const icpShort = (inputs.icp || '').split('\n')[0].slice(0, 70).trim() || 'decision makers and leaders';
+
+    function hashStr(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h |= 0;
+      }
+      return Math.abs(h);
+    }
+
+    const seed = hashStr(`${inputs.intro}||${inputs.icp}||${inputs.life}||${inputs.yacht}`);
+
+    const LB_POOL = [
+      { animal: "Meerkat", emoji: "🐾", adj: "Hyper-Vigilant", name: "Mansi", why: "A meerkat scans 360 degrees for danger, on extreme alert with zero room for error.", tagline: "Perched on high alert, eyes darting at every incoming message, expecting disaster at any moment." },
+      { animal: "Beaver", emoji: "🦫", adj: "Battling", name: "Bhavna", why: "A beaver furiously shoves mud into a breaking dam while floodwaters rise.", tagline: "Exhausted from holding back the flood with bare hands, fighting to keep operations afloat." },
+      { animal: "Octopus", emoji: "🐙", adj: "Overwhelmed", name: "Omkar", why: "An octopus flails eight tentacles trying to juggle eight slipping crises at once.", tagline: "Juggling eight urgent deliverables simultaneously, dropping balls because nobody can do eight jobs alone." },
+      { animal: "Hedgehog", emoji: "🦔", adj: "Hedging", name: "Harsh", why: "A hedgehog curls into a spiky defensive ball to avoid leadership blame after vendors fail.", tagline: "Curled defensively against executive fallout, terrified that one more mistake will damage their career." },
+      { animal: "Chameleon", emoji: "🦎", adj: "Compromised", name: "Charu", why: "A chameleon rapidly shifts colors to placate demanding bosses and unresponsive vendors.", tagline: "Constantly shifting promises to keep leadership calm while delivery stalls behind the scenes." },
+      { animal: "Mule", emoji: "🫏", adj: "Overburdened", name: "Mohit", why: "A mule strains under double its rated pack-weight uphill with zero backup.", tagline: "Carrying the entire project stakes uphill alone, on the brink of total exhaustion." },
+      { animal: "Squirrel", emoji: "🐿️", adj: "Scrambling", name: "Sameer", why: "A squirrel darts frantically through a storm, racing against an unyielding clock.", tagline: "Racing against time with scattered vendor resources, desperate for someone to restore order." }
+    ];
+
+    const YC_POOL = [
+      { animal: "Orca", emoji: "🐋", adj: "Apex", name: "Aditi", why: "An orca leads a synchronized pod across vast oceans to dominate the entire ecosystem.", tagline: "Navigating deep waters with elite precision, orchestrating a presence that commands market respect." },
+      { animal: "Cheetah", emoji: "🐆", adj: "Swift", name: "Chetan", why: "A cheetah coils its muscles, ready to accelerate from stable baseline to market velocity.", tagline: "Poised to accelerate into undisputed category velocity, turning every milestone into PR momentum." },
+      { animal: "Peacock", emoji: "🦚", adj: "Prestigious", name: "Pooja", why: "A peacock unfurls iridescent plumage that demands awe and sets the category benchmark.", tagline: "Demanding a showcase so breathtaking that competitors fade and clients talk for years." },
+      { animal: "Wolf", emoji: "🐺", adj: "Visionary", name: "Vikram", why: "A visionary wolf surveys the ridge, reading the terrain miles ahead to guide the pack to fertile ground.", tagline: "Scanning the 3-year horizon, building an iconic annual property that attracts top-tier clients." },
+      { animal: "Owl", emoji: "🦉", adj: "Far-Sighted", name: "Ojas", why: "An owl operates above the tactical noise with silent 360-degree clarity and strategic wisdom.", tagline: "Operating above tactical chaos with deep strategic insight, creating lasting business equity." },
+      { animal: "Dolphin", emoji: "🐬", adj: "Dynamic", name: "Dev", why: "A dolphin brings electric energy, intelligence, and human warmth to every swell.", tagline: "Infusing human warmth, creative energy, and memorable storytelling into every milestone." },
+      { animal: "Falcon", emoji: "🦅", adj: "Soaring", name: "Farhan", why: "A falcon climbs to 10,000 feet and seizes the biggest market opportunities with surgical precision.", tagline: "Dominating the market airspace with sharp creative vision and zero tolerance for mediocrity." }
+    ];
+
+    const lbItem = LB_POOL[seed % LB_POOL.length];
+    const ycItem = YC_POOL[(Math.floor(seed / 5) + 2) % YC_POOL.length];
+
+    const lifeSplit = (inputs.life || '').split('\n').map(s => s.replace(/^[\d\-.*•]+\s*/, '').trim()).filter(Boolean);
+    const yachtSplit = (inputs.yacht || '').split('\n').map(s => s.replace(/^[\d\-.*•]+\s*/, '').trim()).filter(Boolean);
+
     const fallbackOutput = {
       lifeboat: {
-        characterName: "Rescue Rachel the Restless Rabbit",
-        animal: "Rabbit",
-        emoji: "🐇",
-        tagline: "Ears pinned back, eyes darting, needing an immediate rescue team.",
-        whyAnimal: "A rabbit in panic seeks immediate safety and shelter before taking another breath.",
-        currentState: `Facing an urgent operational crisis around '${inputs.life.slice(0, 80) || 'tight deadlines'}'.`,
-        desiredState: "Having an expert step in and resolve the chaos so normal operations resume.",
-        stage: `Key stakeholder at ${inputs.icp.slice(0, 60) || 'a growing enterprise'}`,
+        characterName: `${lbItem.adj} ${lbItem.name} the ${lbItem.animal}`,
+        animal: lbItem.animal,
+        emoji: lbItem.emoji,
+        tagline: lbItem.tagline,
+        whyAnimal: lbItem.why,
+        currentState: `Facing an urgent operational crisis: '${lifeSplit[0] || inputs.life.slice(0, 80) || 'tight delivery deadlines'}'.`,
+        desiredState: `Having an expert rescue squad step in so '${lifeSplit[1] || 'all operational friction'}' is smoothly handled.`,
+        stage: `Key stakeholder at ${icpShort}`,
         painPoints: [
-          inputs.life.split('\n')[0] || "Urgent deadline with failing execution",
-          "High stakes and accountability to leadership",
-          "Zero tolerance for unexpected surprises"
+          lifeSplit[0] || "Urgent deadline with failing execution",
+          lifeSplit[1] || "High stakes and accountability to leadership",
+          lifeSplit[2] || "Zero tolerance for unexpected surprises"
         ],
         wants: [
-          "Rapid response within hours",
-          "Guaranteed turnaround timeline",
-          "Total peace of mind"
+          "Rapid emergency triage within 24 hours",
+          "Guaranteed fixed-scope turnaround agreement",
+          "Complete peace of mind and leadership acclaim"
         ],
         buyingBehaviour: [
-          "Decides within 48 hours when confidence is established",
-          "Prioritizes immediate availability over long decks",
-          "Requires transparent fixed pricing"
+          "Decides within 48 hours when confidence and rapid responsiveness are established",
+          "Prioritizes immediate operational relief over lengthy agency decks",
+          "Requires transparent fixed pricing with zero hidden fees"
         ],
         language: [
-          "\"Can this be fixed right away?\"",
-          "\"Just tell me you've got this handled.\"",
-          "\"Give me the timeline and all-in price.\""
+          "\"Can this be fixed right away before leadership finds out?\"",
+          "\"Just tell me you have an emergency team ready and give me the all-in price.\"",
+          "\"We don't have time to start from scratch; we need someone to take over now.\"",
+          "\"Give me the timeline and guarantee that we won't have surprises.\""
         ],
         nextSteps: [
           `Schedule a 20-minute rapid triage session with ${brandName}`,
-          "Deliver a 48-hour fixed-scope turnaround proposal",
+          "Deliver a 48-hour fixed-scope turnaround proposal with SLA guarantee",
           "Deploy immediate rescue execution team"
         ]
       },
       yacht: {
-        characterName: "Visionary Victor the Soaring Falcon",
-        animal: "Falcon",
-        emoji: "🦅",
-        tagline: "Scanning the entire horizon from 10,000 feet, ready for the next peak.",
-        whyAnimal: "Falcons fly above the noise and spot transformational opportunities from distance.",
-        currentState: `Stable operations, but wants to achieve category dominance: '${inputs.yacht.slice(0, 80)}'.`,
-        desiredState: "Setting industry benchmarks and enjoying seamless partner alignment.",
-        stage: "Senior leadership building long-term category legacy",
+        characterName: `${ycItem.adj} ${ycItem.name} the ${ycItem.animal}`,
+        animal: ycItem.animal,
+        emoji: ycItem.emoji,
+        tagline: ycItem.tagline,
+        whyAnimal: ycItem.why,
+        currentState: `Stable baseline operations, but wants to achieve category dominance: '${yachtSplit[0] || inputs.yacht.slice(0, 80) || 'industry recognition'}'.`,
+        desiredState: "Setting industry benchmarks, winning executive acclaim, and enjoying seamless partner alignment.",
+        stage: `Visionary executive leading ${icpShort}`,
         painPoints: [
-          inputs.yacht.split('\n')[0] || "Current solutions feel generic and predictable",
-          "Fragmented vendors consuming executive attention",
-          "Need to prove measurable ROI to the board"
+          yachtSplit[0] || "Current solutions feel generic and predictable",
+          yachtSplit[1] || "Fragmented vendors consuming executive attention",
+          yachtSplit[2] || "Need to prove measurable ROI and brand differentiation"
         ],
         wants: [
-          "A signature experience that sets industry standards",
-          "A single strategic partner across the entire year",
-          "Measurable, lasting business impact"
+          "A signature experience that sets a new industry standard",
+          "A single trusted strategic partner across the entire annual calendar",
+          "Measurable, lasting business impact and executive PR buzz"
         ],
         buyingBehaviour: [
           "Takes 4–8 weeks with cross-functional leadership buy-in",
-          "Values portfolio caliber and strategic vision over lowest cost",
+          "Values portfolio caliber, creative vision, and strategic chemistry over lowest cost",
           "Invests in annual partnership retainers"
         ],
         language: [
-          "\"How do we redefine this space?\"",
-          "\"What's the big idea?\"",
-          "\"Let's think of this as an annual partnership.\""
+          "\"We want our next flagship milestone to set a new benchmark in our space.\"",
+          "\"How do we turn ordinary execution into an iconic category property?\"",
+          "\"We don't need another generic vendor; we need a true strategic partner.\"",
+          "\"What is the boldest, most differentiated concept you have for us?\""
         ],
         nextSteps: [
-          "Host an executive vision alignment session",
-          "Present a multi-stage strategic roadmap",
+          `Host an executive vision alignment session with ${brandName}`,
+          "Present a multi-stage strategic roadmap with clear milestones",
           "Initiate an annual partnership retainer agreement"
         ]
       },
       bridge: {
-        headline: `Rescue the Lifeboat today, navigate the Yacht tomorrow with ${brandName}`,
-        lifeboatOffer: "Rapid Rescue: immediate triage and guaranteed delivery for urgent deadlines.",
-        yachtOffer: "Annual Retainer: ongoing strategic partnership driving benchmark performance.",
+        headline: `From Urgent Rescue to Strategic Elevation with ${brandName}`,
+        lifeboatOffer: "Rapid Rescue Sprint: Immediate fixed-scope triage and guaranteed delivery for critical deadlines.",
+        yachtOffer: "Strategic Flagship Retainer: An annual partnership providing continuous concept innovation and executive production.",
         journey: [
           { tag: "Entry", text: "Client enters with an urgent rescue problem requiring immediate stabilization." },
-          { tag: "Proof", text: "Flawless execution under pressure earns complete executive trust." },
+          { tag: "Proof", text: "Flawless execution under fire earns complete executive trust." },
           { tag: "Upgrade", text: "A post-project review reveals strategic opportunities for the year ahead." },
-          { tag: "Retainer", text: "The relationship upgrades to an annual strategic retainer." }
+          { tag: "Retainer", text: "The relationship upgrades to an annual strategic retainer driving category dominance." }
         ],
-        message: `${brandName} gets you from the emergency lifeboat to the luxury yacht.`
+        message: `${brandName} meets you where you are — rescuing you in the storm and navigating you to the horizon.`
       }
     };
 

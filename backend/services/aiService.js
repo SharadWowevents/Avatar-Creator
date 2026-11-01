@@ -1,53 +1,251 @@
 const OpenAI = require('openai');
 
 const JSON_PROMPT_SHAPE = `{
- "lifeboat": {
-   "characterName": "Alliterative human first name + the + adjective + animal (e.g. Rescue Rhea the Restless Rabbit)",
-   "animal": "string",
-   "emoji": "one standard Unicode emoji of exactly that animal",
-   "tagline": "one vivid line",
-   "whyAnimal": "1-2 sentences on why this animal mirrors their situation",
-   "currentState": "1-2 sentences, concrete scene",
-   "desiredState": "1-2 sentences, concrete scene",
-   "stage": "stage of business/life in one line",
-   "painPoints": ["3 strings"],
-   "wants": ["3 strings"],
-   "buyingBehaviour": ["3 strings"],
-   "language": ["4 short phrases they actually say, in quotes"],
-   "nextSteps": ["3 concrete actions the business should take to win this customer"]
- },
- "yacht": {
-   "characterName": "Alliterative human first name + the + adjective + animal (e.g. Visionary Vikram the Soaring Eagle)",
-   "animal": "string",
-   "emoji": "one standard Unicode emoji of exactly that animal",
-   "tagline": "one vivid line",
-   "whyAnimal": "1-2 sentences on why this animal mirrors their situation",
-   "currentState": "1-2 sentences, concrete scene",
-   "desiredState": "1-2 sentences, concrete scene",
-   "stage": "stage of business/life in one line",
-   "painPoints": ["3 strings"],
-   "wants": ["3 strings"],
-   "buyingBehaviour": ["3 strings"],
-   "language": ["4 short phrases they actually say, in quotes"],
-   "nextSteps": ["3 concrete actions the business should take to win this customer"]
- },
- "bridge": {
-   "headline": "catchy headline combining both personas",
-   "lifeboatOffer": "concrete fast rescue solution",
-   "yachtOffer": "premium transformational solution",
-   "journey": [
-     {"tag": "Entry", "text": "how they enter"},
-     {"tag": "Proof", "text": "how trust is proven"},
-     {"tag": "Upgrade", "text": "how they transition"},
-     {"tag": "Retainer", "text": "how they become ongoing partners"}
-   ],
-   "message": "one-line closing brand promise"
- }
+  "lifeboat": {
+    "characterName": "Creative alliterative human first name + the + vivid adjective + evocative animal (e.g. Battling Bhavna the Beaver, Hyper-Vigilant Harshit the Meerkat, Overwhelmed Oliver the Octopus)",
+    "animal": "string (original animal matching their crisis psychology)",
+    "emoji": "one standard Unicode emoji matching that exact animal",
+    "tagline": "one emotionally resonant, vivid sentence capturing their state of panic/urgency",
+    "whyAnimal": "1-2 sentences explaining why this animal metaphor mirrors their exact behavioral posture",
+    "currentState": "1-2 concrete, high-stakes sentences detailing their current crisis scene",
+    "desiredState": "1-2 vivid sentences describing the relief, safety, and triumph they want to feel",
+    "stage": "specific job role, company size, and pressure environment in 1 sentence",
+    "painPoints": ["3 highly specific, concrete operational pain points"],
+    "wants": ["3 exact relief outcomes they urgently demand"],
+    "buyingBehaviour": ["3 realistic buying criteria: turnaround time, pricing model, authority, decision speed"],
+    "language": ["4 raw, authentic quotes they would actually say behind closed doors, in quotes"],
+    "nextSteps": ["3 immediate, tactical actions the business should take to rescue and close this customer"]
+  },
+  "yacht": {
+    "characterName": "Creative alliterative human first name + the + aspirational adjective + majestic animal (e.g. Apex Aditi the Orca, Swift Chetan the Cheetah, Prestigious Pooja the Peacock, Visionary Vikram the Wolf)",
+    "animal": "string (distinct animal representing category altitude and mastery)",
+    "emoji": "one standard Unicode emoji matching that exact animal",
+    "tagline": "one inspiring, elevated sentence capturing their hunger for market dominance and prestige",
+    "whyAnimal": "1-2 sentences explaining why this animal metaphor mirrors their strategic ambition",
+    "currentState": "1-2 concrete sentences on their solid baseline and hunger to elevate above the competition",
+    "desiredState": "1-2 vivid sentences describing setting industry benchmarks, winning acclaim, and driving enterprise ROI",
+    "stage": "executive leadership role, growth trajectory, and market ambition in 1 sentence",
+    "painPoints": ["3 strategic barriers, differentiation challenges, or scaling bottlenecks"],
+    "wants": ["3 transformational outcomes that set a new benchmark in their sector"],
+    "buyingBehaviour": ["3 strategic evaluation habits: retainer models, executive alignment, creative chemistry"],
+    "language": ["4 bold, ambitious quotes they would say to a trusted strategic partner, in quotes"],
+    "nextSteps": ["3 strategic partnership moves the business should propose to win this high-value client"]
+  },
+  "bridge": {
+    "headline": "A bold, compelling strategic headline bridging both personas",
+    "lifeboatOffer": "Concrete, fixed-scope, rapid-turnaround emergency rescue package",
+    "yachtOffer": "Comprehensive annual strategic partnership retainer with continuous innovation",
+    "journey": [
+      {"tag": "Entry", "text": "Specific crisis entry point where the client is rescued with speed"},
+      {"tag": "Proof", "text": "How flawless execution under fire builds unshakable executive trust"},
+      {"tag": "Upgrade", "text": "How the debrief reveals larger strategic gaps and opportunities"},
+      {"tag": "Retainer", "text": "How the client smoothly transitions into an annual flagship retainer"}
+    ],
+    "message": "A memorable, punchy one-sentence brand promise connecting rescue to transformation"
+  }
 }`;
 
+// Diverse pool of 10 distinct Lifeboat archetypes
+const LIFEBOAT_ARCHETYPES = [
+  {
+    animal: "Meerkat",
+    emoji: "🐾",
+    adjective: "Hyper-Vigilant",
+    names: ["Mansi", "Marcus", "Maya", "Manav"],
+    why: "A meerkat perches on edge, scanning 360 degrees for incoming predators, ears twitching at every sudden movement.",
+    tagline: "Perched on high alert, eyes darting at every incoming notification, expecting disaster at any moment.",
+    behavior: ["Decides within 24–48 hours once transparent pricing and rapid availability are proven", "Requires high-frequency status check-ins and single-point-of-contact accountability", "Prioritizes immediate triage over lengthy capability decks"]
+  },
+  {
+    animal: "Beaver",
+    emoji: "🦫",
+    adjective: "Battling",
+    names: ["Bhavna", "Benjamin", "Bikram", "Bela"],
+    why: "A beaver furiously shoves mud and sticks into a breaking dam while the floodwaters rise up to its chest.",
+    tagline: "Exhausted from holding back the flood with bare hands, fighting desperately to keep operations from collapsing.",
+    behavior: ["Demands fixed milestones and ironclad deliverable guarantees with zero change-order surprises", "Looks for battle-tested operators who immediately take the heavy lifting off their shoulders", "Authorizes emergency budgets when a concrete 48-hour rescue plan is presented"]
+  },
+  {
+    animal: "Octopus",
+    emoji: "🐙",
+    adjective: "Overwhelmed",
+    names: ["Omkar", "Olivia", "Onkar", "Oliver"],
+    why: "An octopus furiously flails eight tentacles trying to grab slipping tools, put out fires, and plug eight leaks at once.",
+    tagline: "Juggling eight critical crises simultaneously, dropping essential balls because nobody can do eight jobs alone.",
+    behavior: ["Values total delegation: wants a trusted partner to take complete end-to-end ownership", "Needs simplified executive summaries they can immediately forward to leadership", "Ready to sign rapidly to reclaim sanity and focus on core responsibilities"]
+  },
+  {
+    animal: "Hedgehog",
+    emoji: "🦔",
+    adjective: "Hedging",
+    names: ["Harsh", "Hannah", "Hemant", "Hazel"],
+    why: "A hedgehog curls into a tight spiky ball to protect itself from leadership blame when previous vendors fail.",
+    tagline: "Curled defensively against leadership fallout, terrified that one more vendor mistake will ruin their career.",
+    behavior: ["Extremely risk-averse; requires verifiable case studies and ironclad SLAs before signing", "Needs leadership-safe proposals that justify vendor selection with documented safeguards", "Decides quickly once personal professional liability is completely derisked"]
+  },
+  {
+    animal: "Chameleon",
+    emoji: "🦎",
+    adjective: "Compromised",
+    names: ["Charu", "Chetan", "Chloe", "Chirag"],
+    why: "A chameleon rapidly changes shades to placate demanding bosses and unresponsive vendors, losing its identity in the chaos.",
+    tagline: "Constantly shifting promises to keep leadership happy while vendors fail behind the scenes.",
+    behavior: ["Prioritizes partners who provide polished stakeholder decks and talking points", "Needs immediate timeline stabilization to reset unrealistic executive expectations", "Values transparent daily progress reporting that makes them look heroic to management"]
+  },
+  {
+    animal: "Mule",
+    emoji: "🫏",
+    adjective: "Overburdened",
+    names: ["Mohit", "Megan", "Mukund", "Meera"],
+    why: "A mule strains under double its rated pack-weight on a steep crumbling trail, legs trembling under relentless pressure.",
+    tagline: "Carrying the entire company's project stakes uphill with zero support, on the brink of complete exhaustion.",
+    behavior: ["Seeks an immediate deployment squad that integrates with zero training overhead", "Values honest upfront feasibility advice over yes-men vendor promises", "Decides rapidly when given a fixed-scope, all-inclusive rescue proposal"]
+  },
+  {
+    animal: "Hermit Crab",
+    emoji: "🐚",
+    adjective: "Hollow",
+    names: ["Harshit", "Helena", "Hamza", "Hema"],
+    why: "A hermit crab has outgrown its old shell and is caught exposed on open sand with waves crashing down.",
+    tagline: "Exposed and vulnerable after outgrowing past vendors, desperate for a protective partner before the tide hits.",
+    behavior: ["Recognizes past systems are broken; seeks modern, scalable execution capability", "Wants rapid turnaround proofs before committing to larger long-term restructuring", "Prioritizes high responsiveness and direct cell-phone access to project directors"]
+  },
+  {
+    animal: "Squirrel",
+    emoji: "🐿️",
+    adjective: "Scrambling",
+    names: ["Sameer", "Sophia", "Siddharth", "Simran"],
+    why: "A squirrel darts erratically through a winter gale, burying and unburying acorns with freezing paws.",
+    tagline: "Racing against an unyielding clock with scattered resources, desperate for someone to restore order.",
+    behavior: ["Decides within 24 to 48 hours once trust and transparent pricing are demonstrated", "Prioritizes speed, availability, and low frictional overhead over extensive decks", "Seeks immediate proof of concept or high-confidence references"]
+  },
+  {
+    animal: "Bee",
+    emoji: "🐝",
+    adjective: "Burned-Out",
+    names: ["Bina", "Brandon", "Brijesh", "Brooke"],
+    why: "A worker bee buzzes on depleted reserves in a heavy downpour, struggling to keep the hive's delivery timeline alive.",
+    tagline: "Running on empty while the clock counts down, desperate for reinforcements before the system crashes.",
+    behavior: ["Values rapid response guarantees and proactive communication", "Requires a single accountable lead to cut through internal cross-department noise", "Ready to greenlight fixed-price triage sprints without prolonged negotiations"]
+  },
+  {
+    animal: "Badger",
+    emoji: "🦡",
+    adjective: "Besieged",
+    names: ["Balraj", "Brittany", "Bhavesh", "Beth"],
+    why: "A badger digs deep defensive trenches, growling under relentless scrutiny and impossible executive demands.",
+    tagline: "Cornered by tight timelines and fierce leadership scrutiny, looking for a fearless rescue partner.",
+    behavior: ["Demands straight talk, zero agency jargon, and battle-tested execution veterans", "Checks vendor track record under fire and demands client reference calls within hours", "Locks in fast agreements once absolute operational competence is confirmed"]
+  }
+];
+
+// Diverse pool of 10 distinct Yacht archetypes
+const YACHT_ARCHETYPES = [
+  {
+    animal: "Orca",
+    emoji: "🐋",
+    adjective: "Apex",
+    names: ["Aditi", "Alexander", "Ananya", "Arjun"],
+    why: "An orca leads a highly coordinated pod across vast oceans, using sophisticated strategy to dominate the entire ecosystem.",
+    tagline: "Navigating deep waters with elite precision, orchestrating a world-class presence that commands category respect.",
+    behavior: ["Invests in annual partnership retainers with shared KPI goals and continuous creative development", "Evaluates based on strategic depth, creative caliber, and collaborative chemistry", "Involves C-suite leadership to co-create flagship properties that drive enterprise ROI"]
+  },
+  {
+    animal: "Cheetah",
+    emoji: "🐆",
+    adjective: "Swift",
+    names: ["Chetan", "Claire", "Chirag", "Camilla"],
+    why: "A cheetah sits atop the termite mound, muscles coiled, waiting for the perfect moment to break category speed records.",
+    tagline: "Poised to accelerate from stable baseline to undisputed market velocity, turning every milestone into PR momentum.",
+    behavior: ["Values creative agility, bold concepts, and high-impact differentiation over low bids or standard templates", "Moves fast when inspired by big, boundary-pushing strategic vision", "Seeks partners who can scale velocity and execute high-tempo campaigns"]
+  },
+  {
+    animal: "Peacock",
+    emoji: "🦚",
+    adjective: "Prestigious",
+    names: ["Pooja", "Patrick", "Pradeep", "Penelope"],
+    why: "A peacock unfurls iridescent plumage that demands total awe, creating an unforgettable spectacle that sets the standard.",
+    tagline: "Demanding a stage so breathtaking that competitors fade into the background and clients talk for years.",
+    behavior: ["Prioritizes aesthetic perfection, VIP experience design, and multi-channel buzz", "Expects white-glove presentation and comprehensive concept renderings", "Willing to invest premium budgets for industry-defining showcase execution"]
+  },
+  {
+    animal: "Wolf",
+    emoji: "🐺",
+    adjective: "Visionary",
+    names: ["Vikram", "Victoria", "Varun", "Valerie"],
+    why: "A visionary alpha wolf surveys the ridge under a full moon, reading the terrain miles ahead to guide the pack to fertile ground.",
+    tagline: "Scanning the 3-year horizon, building an iconic annual property that rallies teams and attracts top-tier clients.",
+    behavior: ["Seeks an intellectual sparring partner and strategic retainer to elevate brand presence year after year", "Focuses on pipeline attribution, enterprise audience retention, and long-term brand equity", "Values proactive innovation and quarterly trend reports from their core partner"]
+  },
+  {
+    animal: "Owl",
+    emoji: "🦉",
+    adjective: "Far-Sighted",
+    names: ["Omkar", "Olivia", "Ojas", "Ophelia"],
+    why: "An owl sees through the dark with silent, 360-degree vision, identifying high-altitude shifts long before others notice.",
+    tagline: "Operating above the tactical noise with deep strategic wisdom, creating lasting experiences that build pipeline.",
+    behavior: ["Demands rigorous strategic methodology, data-backed impact measurements, and seamless execution mastery", "Engages in thorough multi-stakeholder evaluation cycles with high governance standards", "Establishes multi-year strategic alliances with proven specialist advisors"]
+  },
+  {
+    animal: "Dolphin",
+    emoji: "🐬",
+    adjective: "Dynamic",
+    names: ["Dev", "Diana", "Deepa", "Daniel"],
+    why: "A dolphin rides the ocean swells with effortless grace and social intelligence, bringing energy and connection to everything.",
+    tagline: "Infusing human warmth, electric energy, and immersive storytelling into every corporate milestone.",
+    behavior: ["Prioritizes collaborative chemistry, experiential innovation, and seamless stakeholder delight", "Prefers agile co-creation sessions and interactive workshops over rigid corporate contracts", "Measures success by attendee sentiment, brand love, and cultural resonance"]
+  },
+  {
+    animal: "Stallion",
+    emoji: "🐎",
+    adjective: "Stride",
+    names: ["Sameer", "Serena", "Siddharth", "Stella"],
+    why: "A thoroughbred stallion gallops across open plains with unstoppable momentum, setting a pace no competitor can match.",
+    tagline: "Powering through expansion with limitless endurance, building signature annual events that define the industry standard.",
+    behavior: ["Commits to annual retainers with shared KPI goals and continuous creative development", "Demands impeccable execution reliability across multiple cities and formats", "Builds enduring partnerships that grow alongside their revenue scaling"]
+  },
+  {
+    animal: "Elephant",
+    emoji: "🐘",
+    adjective: "Eminent",
+    names: ["Ekta", "Ethan", "Eshan", "Elena"],
+    why: "An elephant leads the herd along legendary trails, possessing unshakeable authority, memory, and presence.",
+    tagline: "Anchoring the brand's legacy with grand, dignified experiences that reinforce category leadership.",
+    behavior: ["Operates with multi-quarter planning horizons and senior executive sponsorship", "Values governance, vendor stability, and seamless enterprise brand compliance", "Wants an established, Tier-1 partner capable of orchestrating massive corporate scale"]
+  },
+  {
+    animal: "Albatross",
+    emoji: "🪶",
+    adjective: "Ascendant",
+    names: ["Aarav", "Astrid", "Akash", "Alyssa"],
+    why: "An albatross locks its 11-foot wings into high-altitude ocean updrafts, circling the globe without flapping once.",
+    tagline: "Gliding on global thermal currents with effortless scale, transforming standard events into unforgettable summits.",
+    behavior: ["Looks for full-service strategic partners capable of handling complex national or global productions", "Demands cutting-edge stagecraft, international production standards, and flawless hybrid delivery", "Signs premium annual retainers to secure dedicated creative pods"]
+  },
+  {
+    animal: "Falcon",
+    emoji: "🦅",
+    adjective: "Soaring",
+    names: ["Farhan", "Fiona", "Faisal", "Freya"],
+    why: "A falcon climbs to 10,000 feet, dives with surgical accuracy, and seizes the biggest opportunities in plain sight.",
+    tagline: "Dominating the market airspace with razor-sharp creative vision and zero margin for mediocre execution.",
+    behavior: ["Values bold, boundary-pushing concepts, high production value, and guaranteed flawless delivery", "Expects continuous creative evolution so each event surpasses the last", "Partner selection driven by portfolio caliber, vision, and chemistry"]
+  }
+];
+
+function hashInputs(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
 /**
- * Intelligent Fallback Generator when API key is not supplied or fails
- * Dynamically derives personas strictly from user's actual inputs
+ * Intelligent Fallback Generator with 100 Combinations
+ * Dynamically selects unique personas based on the hash of user inputs
+ * Consistent for identical inputs, highly varied across different inputs
  */
 function generateFallback({ intro = '', icp = '', life = '', yacht = '', both = '' }) {
   const splitBullets = (str, fallback) => {
@@ -59,95 +257,102 @@ function generateFallback({ intro = '', icp = '', life = '', yacht = '', both = 
   };
 
   const lifePoints = splitBullets(life, [
-    "Critical deadline approaching without reliable execution",
-    "High operational pressure and credibility on the line",
-    "Budget constraints with strict risk aversion"
+    "Critical deadline approaching without reliable vendor execution",
+    "High operational pressure with executive credibility on the line",
+    "Budget constraints with strict risk aversion and fear of surprises"
   ]);
 
   const yachtPoints = splitBullets(yacht, [
-    "Outgrowing current baseline and aiming for market leadership",
-    "Fragmented systems or vendors consuming executive bandwidth",
-    "Desire to build measurable, long-term brand equity and ROI"
+    "Outgrowing current baseline and aiming for market-defining benchmarks",
+    "Fragmented vendors consuming executive bandwidth without creative vision",
+    "Desire to build measurable, long-term brand equity and lasting PR buzz"
   ]);
 
   // Extract company/brand name dynamically
   const brandMatch = intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates|designs)|\b)/i);
   const brandName = brandMatch ? brandMatch[1].trim() : 'Your business';
+  const icpShort = (icp || '').split('\n')[0].slice(0, 80).trim() || 'enterprise and growth leaders';
+
+  // Compute deterministic seed from user inputs
+  const fullInputString = `${intro}||${icp}||${life}||${yacht}||${both}`;
+  const seed = hashInputs(fullInputString);
+
+  const lbIndex = seed % LIFEBOAT_ARCHETYPES.length;
+  // Offset yacht index so Lifeboat and Yacht are never from identical seeds
+  const ycIndex = (Math.floor(seed / 7) + 3) % YACHT_ARCHETYPES.length;
+
+  const lbArch = LIFEBOAT_ARCHETYPES[lbIndex];
+  const ycArch = YACHT_ARCHETYPES[ycIndex];
+
+  const lbName = lbArch.names[seed % lbArch.names.length];
+  const ycName = ycArch.names[(Math.floor(seed / 3)) % ycArch.names.length];
 
   return {
     lifeboat: {
-      characterName: "Frantic Farhan the Scrambling Squirrel",
-      animal: "Squirrel",
-      emoji: "🐿️",
-      tagline: "Gathering nuts mid-blizzard, eyes darting at every falling branch.",
-      whyAnimal: "A squirrel is hyper-aware of impending scarcity and danger, constantly reacting to immediate threats instead of calmly executing.",
-      currentState: `Overwhelmed by urgent demands: '${lifePoints[0]}', and worried about operational failure.`,
-      desiredState: `Handing off the crisis to a reliable partner and breathing easy knowing '${lifePoints[1] || 'the crisis'}' is fully resolved.`,
-      stage: `Direct stakeholder in ${icp.slice(0, 70) || 'a high-pressure operational environment'}`,
+      characterName: `${lbArch.adjective} ${lbName} the ${lbArch.animal}`,
+      animal: lbArch.animal,
+      emoji: lbArch.emoji,
+      tagline: lbArch.tagline,
+      whyAnimal: lbArch.why,
+      currentState: `Facing acute operational crisis: '${lifePoints[0]}', with leadership credibility directly at stake.`,
+      desiredState: `Handing off the emergency to a trusted rescue team so '${lifePoints[1] || 'all operational chaos'}' is completely resolved.`,
+      stage: `Direct stakeholder at ${icpShort}`,
       painPoints: lifePoints,
       wants: [
-        "Immediate emergency onboarding and response",
-        "Clear milestone clarity with zero surprise costs",
-        "Direct guarantee that deliverables will land smoothly on time"
+        "Immediate emergency onboarding with guaranteed response times",
+        "Transparent fixed pricing with zero surprise change orders",
+        "Ironclad assurance that deliverables land smoothly and leadership is thrilled"
       ],
-      buyingBehaviour: [
-        "Makes rapid purchasing decisions when trust and quick responsiveness are demonstrated",
-        "Prioritizes speed, availability, and low frictional overhead over extensive decks",
-        "Seeks immediate proof of concept or high-confidence references"
-      ],
+      buyingBehaviour: lbArch.behavior,
       language: [
-        "\"Can we get this sorted by this week?\"",
-        "\"I don't have time to explain everything from scratch.\"",
-        "\"Just tell me what it takes to get it done right now.\"",
-        "\"Give me the fixed-cost breakdown.\""
+        "\"Can you step in and fix this before leadership finds out?\"",
+        "\"We have only weeks left and the previous approach completely broke down.\"",
+        "\"Just tell me you have an emergency team ready and give me the all-in number.\"",
+        "\"I cannot afford a single mistake or surprise right now.\""
       ],
       nextSteps: [
-        `Book a 20-minute rapid triage discovery session with ${brandName}`,
-        "Deliver a scoped turnaround agreement with guaranteed SLA within 48 hours",
-        "Assign a dedicated lead for continuous progress updates"
+        `Schedule a 20-minute rapid triage session with ${brandName}`,
+        "Deliver a 48-hour fixed-scope turnaround proposal with SLA guarantee",
+        "Deploy immediate emergency execution team to take over all delivery friction"
       ]
     },
     yacht: {
-      characterName: "Pioneering Priya the Majestic Panther",
-      animal: "Panther",
-      emoji: "🐆",
-      tagline: "Poised on the high branch, spotting opportunities miles ahead.",
-      whyAnimal: "Panthers move with deliberate grace and high strategic intent. They do not scavenge in a panic; they select high-value targets and scale.",
-      currentState: `Operations are stable, but aiming for category leadership: '${yachtPoints[0]}'.`,
-      desiredState: `Operating as an industry benchmark, with seamless partner alignment driving sustainable growth.`,
-      stage: `Executive or strategic leader aiming to elevate their category presence`,
+      characterName: `${ycArch.adjective} ${ycName} the ${ycArch.animal}`,
+      animal: ycArch.animal,
+      emoji: ycArch.emoji,
+      tagline: ycArch.tagline,
+      whyAnimal: ycArch.why,
+      currentState: `Operations are stable, but hungry to achieve category dominance: '${yachtPoints[0]}'.`,
+      desiredState: "Setting industry benchmarks, driving lasting executive buzz, and enjoying seamless partner alignment.",
+      stage: `Visionary executive driving ${icpShort}`,
       painPoints: yachtPoints,
       wants: [
-        "Proactive strategic guidance rather than reactive task execution",
-        "Integrated high-tier experience and measurable business outcomes",
-        "A true long-term partner who scales alongside their ambitions"
+        "A signature, market-defining experience that sets the industry standard",
+        "A single trusted strategic partner across the entire annual calendar",
+        "Measurable PR buzz, executive acclaim, and strategic business impact"
       ],
-      buyingBehaviour: [
-        "Evaluates based on strategic depth, creative caliber, and collaborative chemistry",
-        "Involves multiple cross-functional stakeholders with 3–6 week deliberative cycles",
-        "Willing to invest premium budgets for proven, transformative outcomes"
-      ],
+      buyingBehaviour: ycArch.behavior,
       language: [
-        "\"How do we redefine this category?\"",
-        "\"What's the strategic roadmap for the next 12 months?\"",
-        "\"Show me the bigger vision.\"",
-        "\"We want a true collaborative partner, not just another vendor.\""
+        "\"We want our next flagship milestone to blow the entire industry away.\"",
+        "\"How do we turn this from an ordinary delivery into our signature category property?\"",
+        "\"We don't need another generic vendor; we need a strategic creative partner.\"",
+        "\"What's the boldest vision you have for our brand this year?\""
       ],
       nextSteps: [
-        "Facilitate an executive discovery workshop to co-create the high-level vision",
-        "Present a multi-tiered strategic partnership proposal with clear milestones",
-        "Share an in-depth case study showcasing transformational ROI"
+        `Facilitate an executive vision alignment workshop with ${brandName}`,
+        "Present a multi-tiered strategic partnership roadmap with clear milestones",
+        "Initiate an annual retainer partnership agreement to secure dedicated creative leads"
       ]
     },
     bridge: {
-      headline: `From Immediate Rescue to Strategic Altitude with ${brandName}`,
-      lifeboatOffer: both ? both.slice(0, 120) : "Rapid-response turnaround package delivering immediate stabilization within 48–72 hours.",
-      yachtOffer: "Comprehensive strategic partnership providing ongoing optimization, high-tier execution, and measurable growth.",
+      headline: `From Fire-Drill Rescue to Industry-Defining Retainer with ${brandName}`,
+      lifeboatOffer: both ? both.slice(0, 140) : "Rapid Rescue Sprint: A fixed-scope emergency triage package executed in 48–72 hours with guaranteed delivery.",
+      yachtOffer: "Strategic Flagship Retainer: An annual partnership providing concept lab innovation, master planning, and executive production.",
       journey: [
-        { tag: "Entry", text: "The client enters via an urgent Lifeboat problem requiring immediate stabilization." },
-        { tag: "Proof", text: "Flawless execution under pressure earns deep executive trust and credibility." },
-        { tag: "Upgrade", text: "A post-project review highlights strategic opportunities for ongoing elevation." },
-        { tag: "Retainer", text: "The relationship converts into an ongoing Yacht partnership driving category dominance." }
+        { tag: "Entry", text: "Client enters with an urgent rescue problem requiring immediate stabilization." },
+        { tag: "Proof", text: "Flawless execution under fire builds deep, unshakable executive trust." },
+        { tag: "Upgrade", text: "A post-project review reveals strategic opportunities for the year ahead." },
+        { tag: "Retainer", text: "The relationship upgrades to an ongoing strategic retainer driving category leadership." }
       ],
       message: `${brandName} meets you where you are — rescuing you in the storm and navigating you to the horizon.`
     }
@@ -155,70 +360,95 @@ function generateFallback({ intro = '', icp = '', life = '', yacht = '', both = 
 }
 
 /**
- * Main Avatar Generator using OpenAI (GPT-6 Luna)
+ * Execute an OpenAI completion call with high creative variation parameters
+ */
+async function executeOpenAICall(openai, model, systemPrompt, userPrompt) {
+  const completion = await openai.chat.completions.create({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.95,
+    presence_penalty: 0.45,
+    frequency_penalty: 0.25,
+  });
+
+  const content = completion.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error('Empty response received from OpenAI');
+  }
+
+  const parsed = JSON.parse(content);
+  if (parsed.lifeboat && parsed.yacht && parsed.bridge) {
+    return parsed;
+  }
+  throw new Error('Incomplete avatar JSON structure returned from OpenAI');
+}
+
+/**
+ * Main Avatar Generator with high creative variation and model resilience
  */
 async function generateAvatars(inputData) {
   const { intro, icp, life, yacht, both } = inputData;
   const apiKey = process.env.OPENAI_API_KEY;
-  const modelName = process.env.OPENAI_MODEL || 'gpt-6-luna';
+  const configuredModel = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
   if (!apiKey || apiKey.trim() === '') {
-    console.log(`[OpenAI Service] No OPENAI_API_KEY detected. Using intelligent heuristic persona generator (Target model: ${modelName}).`);
+    console.log(`[OpenAI Service] No OPENAI_API_KEY detected. Using dynamic multi-archetype persona engine.`);
     return generateFallback(inputData);
   }
+
+  const systemPrompt = `You are a world-class brand strategist and customer psychologist specializing in the Lifeboat vs Yacht customer segmentation framework.
+
+FRAMEWORK PRINCIPLES:
+- The LIFEBOAT Customer: Arrives in a burning crisis. Panic, overwhelm, ticking clock, reputation on the line, let down by previous vendors/solutions. Needs rapid rescue, absolute certainty, fixed-price clarity, zero fluff, and immediate stabilization.
+- The YACHT Customer: Operations are already solid. High ambition, seeking category prestige, scale, industry-defining benchmarks, and long-term transformation. Wants bold concepts, strategic alignment, executive caliber, and an annual partner.
+
+CRUCIAL VARIATION & CREATIVE REQUIREMENTS:
+1. ANIMAL ARCHETYPES: DO NOT default to cliché animals like generic Rabbits or Eagles. Choose original, evocative animal metaphors that deeply mirror the exact psychological posture of this specific buyer in this exact industry. Pull from the full breadth of the animal kingdom (e.g. Meerkat, Beaver, Octopus, Hedgehog, Chameleon, Mule, Hermit Crab, Honey Badger, Mantis, Orca, Cheetah, Wolf, Peacock, Owl, Dolphin, Stallion, Elephant, Albatross, Falcon).
+2. CHARACTER NAMES: Create alliterative names with diverse human first names (Indian or global as appropriate to the business context) + "the" + descriptive adjective + animal. (e.g. "Hyper-Vigilant Harshit the Meerkat", "Battling Bhavna the Beaver", "Apex Aditi the Orca", "Prestigious Patrick the Peacock").
+3. REALISTIC VERBATIM SPOKEN LANGUAGE: The 4 quotes in the "language" field MUST sound like authentic words spoken behind closed doors by real executives in this specific sector — full of genuine tension or ambition, not sanitized corporate jargon.
+4. DEEP INDUSTRY TAILORING: Use the specific terminology, pain points, metrics, and operational realities provided in the prompt. Every line must feel bespoke to this exact business and ICP.
+5. You must respond strictly with valid JSON conforming to the requested schema.`;
+
+  const userPrompt = `BUSINESS OVERVIEW:
+${intro}
+
+TARGET ICP (IDEAL CUSTOMER PROFILE):
+${icp}
+
+AS A LIFEBOAT - TOP 3 ISSUES YOU RESCUE THEM FROM:
+${life}
+
+AS A YACHT - TOP 3 ISSUES YOU SOLVE FOR THEIR GROWTH/STATUS:
+${yacht}
+
+HOW YOU HELP BOTH (BRIDGE METHOD):
+${both || "(Propose a compelling strategic 2-speed method to transition rescue clients into long-term retainer partners)"}
+
+Generate two vivid, deeply differentiated customer personas (one Lifeboat, one Yacht) and a strategic bridge. Reply strictly with valid JSON matching this schema:
+${JSON_PROMPT_SHAPE}`;
 
   try {
     const openai = new OpenAI({
       apiKey: apiKey.trim(),
     });
 
-    const systemPrompt = `You are a sharp marketing strategist. Build two customer avatars for this business using the Lifeboat vs Yacht model.
-Lifeboat customer = in trouble, urgent, needs rescue. Yacht customer = doing well, wants to go further, status and growth.
-Give each avatar an animal character that relates to their situation, current state and desired state. Choose two different animals. Be specific to this business and ICP; no generic filler.
-You must respond strictly with valid JSON conforming to the requested schema.`;
-
-    const userPrompt = `BUSINESS INTRO:
-${intro}
-
-ICP:
-${icp}
-
-AS A LIFEBOAT, TOP 3 ISSUES WE SOLVE:
-${life}
-
-AS A YACHT, TOP 3 ISSUES WE SOLVE:
-${yacht}
-
-HOW WE HELP BOTH:
-${both || "(not given — propose it)"}
-
-Reply strictly with valid JSON conforming exactly to this shape:
-${JSON_PROMPT_SHAPE}`;
-
-    console.log(`[OpenAI Service] Calling OpenAI model: ${modelName}`);
-
-    const completion = await openai.chat.completions.create({
-      model: modelName,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Empty response received from OpenAI');
-    }
-
-    const parsed = JSON.parse(content);
-    if (parsed.lifeboat && parsed.yacht && parsed.bridge) {
-      return parsed;
-    } else {
-      throw new Error('Incomplete avatar JSON structure returned from OpenAI');
+    try {
+      console.log(`[OpenAI Service] Calling configured model: ${configuredModel}`);
+      return await executeOpenAICall(openai, configuredModel, systemPrompt, userPrompt);
+    } catch (primaryErr) {
+      // If configured model failed (e.g. non-standard model name like 'gpt-6-luna' or model retired), fallback to standard production model
+      if (configuredModel !== 'gpt-4o-mini' && configuredModel !== 'gpt-4o') {
+        console.warn(`[OpenAI Service] Primary model '${configuredModel}' failed: ${primaryErr.message}. Retrying with production model 'gpt-4o-mini'...`);
+        return await executeOpenAICall(openai, 'gpt-4o-mini', systemPrompt, userPrompt);
+      }
+      throw primaryErr;
     }
   } catch (err) {
-    console.warn(`[OpenAI Service] OpenAI generation failed with model '${modelName}': ${err.message}. Falling back to heuristic generator.`);
+    console.warn(`[OpenAI Service] OpenAI generation failed: ${err.message}. Generating via dynamic multi-archetype persona engine.`);
     return generateFallback(inputData);
   }
 }

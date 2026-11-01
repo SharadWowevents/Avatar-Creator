@@ -40,9 +40,9 @@ async function sendOtpEmail(toEmail, otp, recipientName = 'Customer') {
         user,
         pass,
       },
-      connectionTimeout: 4000,
-      greetingTimeout: 4000,
-      socketTimeout: 6000,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
     });
 
     const htmlContent = `
@@ -207,9 +207,9 @@ async function sendAvatarDossierEmail({
         user,
         pass,
       },
-      connectionTimeout: 4000,
-      greetingTimeout: 4000,
-      socketTimeout: 6000,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
     });
 
     const mailOptions = {

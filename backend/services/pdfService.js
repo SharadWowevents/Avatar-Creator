@@ -22,7 +22,7 @@ function generateAvatarPdfBuffer(data) {
         return resolve(null);
       }
 
-      // Important: margins 0 disables PDFKit's automatic unwanted page breaks
+      // Important: margins 0 and overriding continueOnNewPage guarantees exactly 3 pages
       const doc = new PDFDocument({
         size: 'A4',
         margins: { top: 0, bottom: 0, left: 0, right: 0 },
@@ -35,6 +35,9 @@ function generateAvatarPdfBuffer(data) {
           Creator: 'Customer Avatar Creator'
         }
       });
+
+      // Completely disable internal automatic pagebreaks so PDFKit never adds unexpected blank/broken pages
+      doc.continueOnNewPage = function() { return this; };
 
       const buffers = [];
       doc.on('data', chunk => buffers.push(chunk));
@@ -92,7 +95,7 @@ function generateAvatarPdfBuffer(data) {
         doc.fillColor(colors.muted)
           .font('Helvetica')
           .fontSize(8)
-          .text('WOW Events • Customer Avatar Creator Dossier', margin, footerY, { lineBreak: false });
+          .text('WOW Events | Customer Avatar Creator Dossier', margin, footerY, { lineBreak: false });
 
         doc.fillColor(colors.muted)
           .font('Helvetica')
@@ -100,10 +103,17 @@ function generateAvatarPdfBuffer(data) {
           .text(`Page ${pageNum} of 3`, margin + contentWidth - 60, footerY, { width: 60, align: 'right', lineBreak: false });
       }
 
-      // Helper for text sanitization (removes unsupported glyphs in standard Helvetica)
+      // Helper for text sanitization (translates unicode symbols into clean PDF-safe text)
       function cleanText(txt) {
         if (!txt) return '';
         return String(txt)
+          .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+          .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+          .replace(/[\u2013\u2014\u2015]/g, '-')
+          .replace(/[\u2192\u21D2\u2794\u27A1]/g, '->')
+          .replace(/[\u2022\u2023\u25E6\u2043]/g, '-')
+          .replace(/₹/g, 'Rs. ')
+          .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
           .replace(/[^\x00-\x7F]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
@@ -448,7 +458,7 @@ function generateAvatarPdfBuffer(data) {
       doc.roundedRect(margin, curY3, contentWidth, 230, 5)
         .fillAndStroke(colors.bgSoft, colors.line);
 
-      doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(11.5).text('The Lifeboat → Yacht Journey Ladder', margin + 12, curY3 + 10, { lineBreak: false });
+      doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(11.5).text('The Lifeboat -> Yacht Journey Ladder', margin + 12, curY3 + 10, { lineBreak: false });
       doc.fillColor(colors.muted).font('Helvetica').fontSize(8.5).text('How rescue clients naturally transition into long-term strategic relationships:', margin + 12, curY3 + 24, { lineBreak: false });
 
       let stepY = curY3 + 42;
@@ -463,9 +473,18 @@ function generateAvatarPdfBuffer(data) {
         const badgeColor = idx === 0 ? colors.life : idx === journey.length - 1 ? colors.yacht : colors.navy;
         doc.roundedRect(margin + 12, stepY, 66, 20, 3)
           .fillAndStroke(badgeColor, badgeColor);
-        doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8).text(cleanText(step.tag || `Step ${idx + 1}`).toUpperCase(), margin + 14, stepY + 5, { width: 62, align: 'center', lineBreak: false });
 
-        doc.fillColor(colors.ink).font('Helvetica').fontSize(8.5).text(cleanText(step.text || ''), margin + 86, stepY + 4, { width: contentWidth - 98, height: 28 });
+        const rawTag = typeof step === 'string'
+          ? (step.split(/[:\-–]/)[0] || `STEP ${idx + 1}`)
+          : (step.tag || `STEP ${idx + 1}`);
+
+        const rawText = typeof step === 'string'
+          ? step.replace(/^[^:\-–]+[:\-–]\s*/, '')
+          : (step.text || step.desc || '');
+
+        doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8).text(cleanText(rawTag).toUpperCase(), margin + 14, stepY + 5, { width: 62, align: 'center', lineBreak: false });
+
+        doc.fillColor(colors.ink).font('Helvetica').fontSize(8.5).text(cleanText(rawText), margin + 86, stepY + 4, { width: contentWidth - 98, height: 28 });
 
         stepY += 44;
       });
