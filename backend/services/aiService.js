@@ -360,31 +360,95 @@ function generateFallback({ intro = '', icp = '', life = '', yacht = '', both = 
 }
 
 /**
- * Execute an OpenAI completion call with high creative variation parameters
+ * Execute completion call on Luna 6 (gpt-6-luna) or standard OpenAI models.
+ * Handles reasoning models, developer role, and sampling parameter compatibility for maximum creative variation.
  */
 async function executeOpenAICall(openai, model, systemPrompt, userPrompt) {
-  const completion = await openai.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.95,
-    presence_penalty: 0.45,
-    frequency_penalty: 0.25,
-  });
+  const isLuna = model.toLowerCase().includes('luna');
+  const isReasoning = isLuna || model.toLowerCase().includes('o1') || model.toLowerCase().includes('o3');
 
-  const content = completion.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error('Empty response received from OpenAI');
+  // Multi-tier attempt payloads tailored for Luna 6 and standard models
+  const payloads = [];
+
+  if (isReasoning) {
+    // 1. Luna 6 with unlocked sampling: reasoning_effort 'none' + high temperature for maximum creative diversity
+    payloads.push({
+      model,
+      messages: [
+        { role: 'developer', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      reasoning_effort: 'none',
+      temperature: 1.0,
+    });
+
+    // 2. Luna 6 in fast reasoning mode (low reasoning effort, omit temperature)
+    payloads.push({
+      model,
+      messages: [
+        { role: 'developer', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      reasoning_effort: 'low',
+    });
+
+    // 3. Luna 6 with system role fallback
+    payloads.push({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+    });
+  } else {
+    // Standard chat models (gpt-4o, gpt-4o-mini)
+    payloads.push({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 1.0,
+      presence_penalty: 0.45,
+      frequency_penalty: 0.3,
+    });
   }
 
-  const parsed = JSON.parse(content);
-  if (parsed.lifeboat && parsed.yacht && parsed.bridge) {
-    return parsed;
+  let lastError = null;
+  for (const payload of payloads) {
+    try {
+      const completion = await openai.chat.completions.create(payload);
+      const content = completion.choices[0]?.message?.content;
+      if (!content) throw new Error('Empty response content received from OpenAI');
+      const parsed = JSON.parse(content);
+      if (parsed.lifeboat && parsed.yacht && parsed.bridge) {
+        return parsed;
+      }
+      throw new Error('Incomplete avatar JSON structure returned from model');
+    } catch (err) {
+      lastError = err;
+      const msg = (err.message || '').toLowerCase();
+      // If error is due to an unsupported parameter or role in reasoning mode, gracefully attempt next payload shape
+      if (
+        msg.includes('unsupported') ||
+        msg.includes('parameter') ||
+        msg.includes('reasoning') ||
+        msg.includes('temperature') ||
+        msg.includes('developer') ||
+        msg.includes('sampling')
+      ) {
+        continue;
+      }
+      // If auth, network, or fatal error, throw immediately
+      throw err;
+    }
   }
-  throw new Error('Incomplete avatar JSON structure returned from OpenAI');
+
+  throw lastError || new Error('All model execution payloads failed');
 }
 
 /**
@@ -393,7 +457,7 @@ async function executeOpenAICall(openai, model, systemPrompt, userPrompt) {
 async function generateAvatars(inputData) {
   const { intro, icp, life, yacht, both } = inputData;
   const apiKey = process.env.OPENAI_API_KEY;
-  const configuredModel = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const configuredModel = process.env.OPENAI_MODEL || 'gpt-6-luna';
 
   if (!apiKey || apiKey.trim() === '') {
     console.log(`[OpenAI Service] No OPENAI_API_KEY detected. Using dynamic multi-archetype persona engine.`);
@@ -406,12 +470,14 @@ FRAMEWORK PRINCIPLES:
 - The LIFEBOAT Customer: Arrives in a burning crisis. Panic, overwhelm, ticking clock, reputation on the line, let down by previous vendors/solutions. Needs rapid rescue, absolute certainty, fixed-price clarity, zero fluff, and immediate stabilization.
 - The YACHT Customer: Operations are already solid. High ambition, seeking category prestige, scale, industry-defining benchmarks, and long-term transformation. Wants bold concepts, strategic alignment, executive caliber, and an annual partner.
 
-CRUCIAL VARIATION & CREATIVE REQUIREMENTS:
-1. ANIMAL ARCHETYPES: DO NOT default to cliché animals like generic Rabbits or Eagles. Choose original, evocative animal metaphors that deeply mirror the exact psychological posture of this specific buyer in this exact industry. Pull from the full breadth of the animal kingdom (e.g. Meerkat, Beaver, Octopus, Hedgehog, Chameleon, Mule, Hermit Crab, Honey Badger, Mantis, Orca, Cheetah, Wolf, Peacock, Owl, Dolphin, Stallion, Elephant, Albatross, Falcon).
-2. CHARACTER NAMES: Create alliterative names with diverse human first names (Indian or global as appropriate to the business context) + "the" + descriptive adjective + animal. (e.g. "Hyper-Vigilant Harshit the Meerkat", "Battling Bhavna the Beaver", "Apex Aditi the Orca", "Prestigious Patrick the Peacock").
-3. REALISTIC VERBATIM SPOKEN LANGUAGE: The 4 quotes in the "language" field MUST sound like authentic words spoken behind closed doors by real executives in this specific sector — full of genuine tension or ambition, not sanitized corporate jargon.
-4. DEEP INDUSTRY TAILORING: Use the specific terminology, pain points, metrics, and operational realities provided in the prompt. Every line must feel bespoke to this exact business and ICP.
-5. You must respond strictly with valid JSON conforming to the requested schema.`;
+MAXIMUM CREATIVE VARIATION & BESPOKE TAILORING:
+1. UNBOUNDED ANIMAL ARCHETYPES: DO NOT repeat cliché animals (like generic Rabbits or Eagles unless given a truly sharp, distinctive angle). Explore the full breadth of the animal kingdom to mirror the exact psychological posture of this specific buyer:
+   - Crisis / Rescue Metaphors: Meerkat, Octopus, Beaver, Hedgehog, Chameleon, Pack Mule, Hermit Crab, Honey Badger, Praying Mantis, Electric Eel, Scrambling Squirrel, Worker Bee, Badger, Armadillo, Sledge Dog, Camel, Barn Owl, Lynx.
+   - Growth / Ambition Metaphors: Orca, Cheetah, Wolf, Peacock, Dolphin, Stallion, Elephant, Phoenix, Lion, Royal Bengal Tiger, Peregrine Falcon, Snow Leopard, Golden Eagle, Blue Whale, Osprey, Jaguar, Black Panther.
+2. ALLITERATIVE CHARACTER NAMES: Create vivid, memorable names combining diverse human first names (Indian or global as fitting the ICP) + "the" + descriptive adjective + animal (e.g. "Hyper-Vigilant Harshit the Meerkat", "Overwhelmed Omkar the Octopus", "Apex Aditi the Orca", "Prestigious Pooja the Peacock", "Battling Bikram the Beaver").
+3. RAW VERBATIM SPOKEN LANGUAGE: The 4 quotes in the "language" field must sound like authentic words spoken behind closed doors by real executives in this specific sector — filled with genuine emotional tension, frustration, or visionary ambition, not sanitized corporate marketing jargon.
+4. DEEP INDUSTRY TAILORING: Embed the exact terminology, operational realities, and metrics from the user's input.
+5. Strictly return valid JSON conforming to the requested schema.`;
 
   const userPrompt = `BUSINESS OVERVIEW:
 ${intro}
@@ -428,7 +494,8 @@ ${yacht}
 HOW YOU HELP BOTH (BRIDGE METHOD):
 ${both || "(Propose a compelling strategic 2-speed method to transition rescue clients into long-term retainer partners)"}
 
-Generate two vivid, deeply differentiated customer personas (one Lifeboat, one Yacht) and a strategic bridge. Reply strictly with valid JSON matching this schema:
+CREATIVE VARIATION DIRECTIVE:
+Generate two fresh, highly original, deeply differentiated customer personas (one Lifeboat in crisis, one Yacht in high ambition) with a strategic bridge offer. Ensure rich creative variation in animal metaphor, quotes, and tactical steps. Reply strictly with valid JSON matching this schema:
 ${JSON_PROMPT_SHAPE}`;
 
   try {
@@ -437,12 +504,15 @@ ${JSON_PROMPT_SHAPE}`;
     });
 
     try {
-      console.log(`[OpenAI Service] Calling configured model: ${configuredModel}`);
-      return await executeOpenAICall(openai, configuredModel, systemPrompt, userPrompt);
+      console.log(`[OpenAI Service] Calling Luna 6 configured model: ${configuredModel}`);
+      const result = await executeOpenAICall(openai, configuredModel, systemPrompt, userPrompt);
+      console.log(`[OpenAI Service] Successfully generated avatars using ${configuredModel}!`);
+      return result;
     } catch (primaryErr) {
-      // If configured model failed (e.g. non-standard model name like 'gpt-6-luna' or model retired), fallback to standard production model
+      console.warn(`[OpenAI Service] Primary model '${configuredModel}' failed: ${primaryErr.message}`);
+      // Fallback to standard production model if configured model fails
       if (configuredModel !== 'gpt-4o-mini' && configuredModel !== 'gpt-4o') {
-        console.warn(`[OpenAI Service] Primary model '${configuredModel}' failed: ${primaryErr.message}. Retrying with production model 'gpt-4o-mini'...`);
+        console.warn(`[OpenAI Service] Retrying with production model 'gpt-4o-mini'...`);
         return await executeOpenAICall(openai, 'gpt-4o-mini', systemPrompt, userPrompt);
       }
       throw primaryErr;

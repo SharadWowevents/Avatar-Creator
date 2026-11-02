@@ -30,7 +30,7 @@ export async function generateAvatarApi(inputs) {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(inputs),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(45000),
     });
 
     const data = await res.json();
