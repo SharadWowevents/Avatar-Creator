@@ -125,33 +125,18 @@ export default function InputPage({
       return;
     }
 
-    // 1. If user previously generated avatar and clicks "Create avatars" with the exact same inputs:
-    if (resultData && areInputsIdentical(inputs, lastGeneratedInputs)) {
-      navigate('/result');
-      return;
-    }
-
-    // 2. If any existing saved avatar in the user's history has the exact same inputs:
-    const matchingSaved = (savedAvatars || []).find(item => areInputsIdentical(inputs, item.inputs));
-    if (matchingSaved && matchingSaved.output) {
-      setResultData(matchingSaved.output);
-      if (setLastGeneratedInputs) {
-        setLastGeneratedInputs(matchingSaved.inputs);
-      }
-      try {
-        localStorage.setItem('cac-output', JSON.stringify(matchingSaved.output));
-        localStorage.setItem('cac-last-inputs', JSON.stringify(matchingSaved.inputs));
-      } catch {}
-      navigate('/result');
-      return;
-    }
-
     setLoading(true);
     setStatusType('normal');
     setStatus('');
 
+    // If user already generated for these inputs and submits again, flag as regenerate for fresh creative variation
+    const isRequery = Boolean(
+      (resultData && areInputsIdentical(inputs, lastGeneratedInputs)) ||
+      (savedAvatars || []).some(item => areInputsIdentical(inputs, item.inputs))
+    );
+
     try {
-      const result = await generateAvatarApi(inputs);
+      const result = await generateAvatarApi({ ...inputs, regenerate: isRequery });
       setResultData(result);
       if (setLastGeneratedInputs) {
         setLastGeneratedInputs(inputs);

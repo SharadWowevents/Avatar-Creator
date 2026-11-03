@@ -2,25 +2,25 @@ const OpenAI = require('openai');
 
 const JSON_PROMPT_SHAPE = `{
   "lifeboat": {
-    "characterName": "Creative alliterative human first name + the + vivid adjective + evocative animal (e.g. Battling Bhavna the Beaver, Hyper-Vigilant Harshit the Meerkat, Overwhelmed Oliver the Octopus)",
-    "animal": "string (original animal matching their crisis psychology)",
+    "characterName": "Unique alliterative name (e.g. FirstName + the + vivid adjective + domain-tailored crisis animal metaphor)",
+    "animal": "string (unexpected, evocative animal reflecting this buyer's specific distress posture in their industry)",
     "emoji": "one standard Unicode emoji matching that exact animal",
-    "tagline": "one emotionally resonant, vivid sentence capturing their state of panic/urgency",
-    "whyAnimal": "1-2 sentences explaining why this animal metaphor mirrors their exact behavioral posture",
-    "currentState": "1-2 concrete, high-stakes sentences detailing their current crisis scene",
-    "desiredState": "1-2 vivid sentences describing the relief, safety, and triumph they want to feel",
-    "stage": "specific job role, company size, and pressure environment in 1 sentence",
-    "painPoints": ["3 highly specific, concrete operational pain points"],
-    "wants": ["3 exact relief outcomes they urgently demand"],
-    "buyingBehaviour": ["3 realistic buying criteria: turnaround time, pricing model, authority, decision speed"],
-    "language": ["4 raw, authentic quotes they would actually say behind closed doors, in quotes"],
+    "tagline": "one emotionally raw, gripping sentence capturing their state of panic, pressure, or urgency",
+    "whyAnimal": "1-2 sentences explaining why this animal metaphor mirrors their exact behavioral posture in this industry",
+    "currentState": "1-2 concrete, high-stakes sentences detailing their current crisis scene with specific operational realities",
+    "desiredState": "1-2 vivid sentences describing the relief, safety, and operational stability they urgently seek",
+    "stage": "specific job role, company size, and high-pressure operational environment in 1 sentence",
+    "painPoints": ["3 highly specific, concrete operational pain points derived directly from the business domain"],
+    "wants": ["3 exact, tangible relief deliverables they urgently demand"],
+    "buyingBehaviour": ["3 realistic buying criteria: emergency turnaround time, pricing model, authority, decision speed"],
+    "language": ["4 raw, authentic quotes spoken behind closed doors with genuine emotion and industry vocabulary, in quotes"],
     "nextSteps": ["3 immediate, tactical actions the business should take to rescue and close this customer"]
   },
   "yacht": {
-    "characterName": "Creative alliterative human first name + the + aspirational adjective + majestic animal (e.g. Apex Aditi the Orca, Swift Chetan the Cheetah, Prestigious Pooja the Peacock, Visionary Vikram the Wolf)",
-    "animal": "string (distinct animal representing category altitude and mastery)",
+    "characterName": "Unique alliterative name (e.g. FirstName + the + aspirational adjective + majestic category-altitude animal metaphor)",
+    "animal": "string (distinct animal representing category altitude, mastery, and strategic vision)",
     "emoji": "one standard Unicode emoji matching that exact animal",
-    "tagline": "one inspiring, elevated sentence capturing their hunger for market dominance and prestige",
+    "tagline": "one elevated, magnetic sentence capturing their hunger for market dominance and prestige",
     "whyAnimal": "1-2 sentences explaining why this animal metaphor mirrors their strategic ambition",
     "currentState": "1-2 concrete sentences on their solid baseline and hunger to elevate above the competition",
     "desiredState": "1-2 vivid sentences describing setting industry benchmarks, winning acclaim, and driving enterprise ROI",
@@ -28,20 +28,20 @@ const JSON_PROMPT_SHAPE = `{
     "painPoints": ["3 strategic barriers, differentiation challenges, or scaling bottlenecks"],
     "wants": ["3 transformational outcomes that set a new benchmark in their sector"],
     "buyingBehaviour": ["3 strategic evaluation habits: retainer models, executive alignment, creative chemistry"],
-    "language": ["4 bold, ambitious quotes they would say to a trusted strategic partner, in quotes"],
+    "language": ["4 bold, ambitious quotes they would say to a trusted strategic partner with domain-specific vision, in quotes"],
     "nextSteps": ["3 strategic partnership moves the business should propose to win this high-value client"]
   },
   "bridge": {
-    "headline": "A bold, compelling strategic headline bridging both personas",
-    "lifeboatOffer": "Concrete, fixed-scope, rapid-turnaround emergency rescue package",
-    "yachtOffer": "Comprehensive annual strategic partnership retainer with continuous innovation",
+    "headline": "A bold, compelling strategic headline bridging both personas (customized to this specific business, NO generic clichés)",
+    "lifeboatOffer": "Concrete, bespoke rescue sprint named specifically for this business with fixed scope and timeline",
+    "yachtOffer": "Bespoke annual strategic partnership retainer named specifically for this business",
     "journey": [
-      {"tag": "Entry", "text": "Specific crisis entry point where the client is rescued with speed"},
-      {"tag": "Proof", "text": "How flawless execution under fire builds unshakable executive trust"},
-      {"tag": "Upgrade", "text": "How the debrief reveals larger strategic gaps and opportunities"},
+      {"tag": "Entry", "text": "Specific crisis entry point where the client is rescued with rapid stabilization"},
+      {"tag": "Proof", "text": "How flawless execution under fire builds deep executive trust"},
+      {"tag": "Upgrade", "text": "How the debrief reveals larger strategic gaps and long-term opportunities"},
       {"tag": "Retainer", "text": "How the client smoothly transitions into an annual flagship retainer"}
     ],
-    "message": "A memorable, punchy one-sentence brand promise connecting rescue to transformation"
+    "message": "A memorable, punchy one-sentence brand promise connecting rescue to transformation, tailored to this company"
   }
 }`;
 
@@ -345,16 +345,16 @@ function generateFallback({ intro = '', icp = '', life = '', yacht = '', both = 
       ]
     },
     bridge: {
-      headline: `From Fire-Drill Rescue to Industry-Defining Retainer with ${brandName}`,
-      lifeboatOffer: both ? both.slice(0, 140) : "Rapid Rescue Sprint: A fixed-scope emergency triage package executed in 48–72 hours with guaranteed delivery.",
-      yachtOffer: "Strategic Flagship Retainer: An annual partnership providing concept lab innovation, master planning, and executive production.",
+      headline: `From ${lifePoints[0]?.slice(0, 45) || 'Critical Delivery'} to ${yachtPoints[0]?.slice(0, 45) || 'Category Leadership'}`,
+      lifeboatOffer: both ? both.slice(0, 160) : `${brandName} Rapid Stabilization Sprint: A 48-hour fixed-scope intervention tackling ${lifePoints[0]?.slice(0, 60) || 'urgent delivery risks'}.`,
+      yachtOffer: `${brandName} Flagship Retainer: An annual strategic partnership driving ${yachtPoints[0]?.slice(0, 60) || 'industry-defining benchmarks'}.`,
       journey: [
-        { tag: "Entry", text: "Client enters with an urgent rescue problem requiring immediate stabilization." },
-        { tag: "Proof", text: "Flawless execution under fire builds deep, unshakable executive trust." },
-        { tag: "Upgrade", text: "A post-project review reveals strategic opportunities for the year ahead." },
-        { tag: "Retainer", text: "The relationship upgrades to an ongoing strategic retainer driving category leadership." }
+        { tag: "Entry", text: `Client enters facing acute friction: "${lifePoints[0]?.slice(0, 80) || 'urgent operational bottleneck'}", requiring immediate intervention.` },
+        { tag: "Proof", text: `Rapid execution under pressure neutralizes "${lifePoints[1]?.slice(0, 80) || 'the crisis'}", establishing ironclad trust.` },
+        { tag: "Upgrade", text: `A strategic debrief reveals high-altitude opportunities to address "${yachtPoints[0]?.slice(0, 80) || 'long-term market positioning'}".` },
+        { tag: "Retainer", text: `The relationship expands into a year-round partnership achieving "${yachtPoints[1]?.slice(0, 80) || 'uncontested category status'}".` }
       ],
-      message: `${brandName} meets you where you are — rescuing you in the storm and navigating you to the horizon.`
+      message: `${brandName} anchors you through the immediate storm and propels you into market leadership.`
     }
   };
 }
@@ -464,20 +464,37 @@ async function generateAvatars(inputData) {
     return generateFallback(inputData);
   }
 
+  const CREATIVE_LENSES = [
+    "PSYCHOLOGICAL LENS: High-Stakes Career Liability & Executive Exposure (Lifeboat) vs Category Monopoly & Legacy Definition (Yacht).",
+    "PSYCHOLOGICAL LENS: Immediate Tactical Vendor Bleed & Timeline Collapse (Lifeboat) vs Signature Global Masterwork & Industry Benchmark (Yacht).",
+    "PSYCHOLOGICAL LENS: Relentless Operational Chokepoints & Budget Panic (Lifeboat) vs Long-Horizon Strategic Retainer & Category Hegemony (Yacht).",
+    "PSYCHOLOGICAL LENS: Ticking Clock Crisis & Lost Stakeholder Faith (Lifeboat) vs Boundary-Pushing Creative Standard & Enterprise Transformation (Yacht).",
+    "PSYCHOLOGICAL LENS: Exhausted Decision Paralysis & Team Friction (Lifeboat) vs Elite Multi-Year Partnership & Unrivaled Market Authority (Yacht)."
+  ];
+  const selectedLens = CREATIVE_LENSES[Math.floor(Math.random() * CREATIVE_LENSES.length)];
+  const variationNonce = Math.floor(Math.random() * 1000000);
+
   const systemPrompt = `You are a world-class brand strategist and customer psychologist specializing in the Lifeboat vs Yacht customer segmentation framework.
 
 FRAMEWORK PRINCIPLES:
-- The LIFEBOAT Customer: Arrives in a burning crisis. Panic, overwhelm, ticking clock, reputation on the line, let down by previous vendors/solutions. Needs rapid rescue, absolute certainty, fixed-price clarity, zero fluff, and immediate stabilization.
+- The LIFEBOAT Customer: Arrives in a burning operational crisis. Panic, overwhelm, ticking clock, reputation on the line, let down by previous vendors. Needs rapid rescue, absolute operational certainty, fixed-price clarity, zero fluff, and immediate stabilization.
 - The YACHT Customer: Operations are already solid. High ambition, seeking category prestige, scale, industry-defining benchmarks, and long-term transformation. Wants bold concepts, strategic alignment, executive caliber, and an annual partner.
 
-MAXIMUM CREATIVE VARIATION & BESPOKE TAILORING:
-1. UNBOUNDED ANIMAL ARCHETYPES: DO NOT repeat cliché animals (like generic Rabbits or Eagles unless given a truly sharp, distinctive angle). Explore the full breadth of the animal kingdom to mirror the exact psychological posture of this specific buyer:
-   - Crisis / Rescue Metaphors: Meerkat, Octopus, Beaver, Hedgehog, Chameleon, Pack Mule, Hermit Crab, Honey Badger, Praying Mantis, Electric Eel, Scrambling Squirrel, Worker Bee, Badger, Armadillo, Sledge Dog, Camel, Barn Owl, Lynx.
-   - Growth / Ambition Metaphors: Orca, Cheetah, Wolf, Peacock, Dolphin, Stallion, Elephant, Phoenix, Lion, Royal Bengal Tiger, Peregrine Falcon, Snow Leopard, Golden Eagle, Blue Whale, Osprey, Jaguar, Black Panther.
-2. ALLITERATIVE CHARACTER NAMES: Create vivid, memorable names combining diverse human first names (Indian or global as fitting the ICP) + "the" + descriptive adjective + animal (e.g. "Hyper-Vigilant Harshit the Meerkat", "Overwhelmed Omkar the Octopus", "Apex Aditi the Orca", "Prestigious Pooja the Peacock", "Battling Bikram the Beaver").
-3. RAW VERBATIM SPOKEN LANGUAGE: The 4 quotes in the "language" field must sound like authentic words spoken behind closed doors by real executives in this specific sector — filled with genuine emotional tension, frustration, or visionary ambition, not sanitized corporate marketing jargon.
-4. DEEP INDUSTRY TAILORING: Embed the exact terminology, operational realities, and metrics from the user's input.
-5. Strictly return valid JSON conforming to the requested schema.`;
+MANDATORY ANTI-REPETITION & ANTI-CLICHÉ RULES:
+1. STRICTLY FORBIDDEN CANNED PHRASES: Do NOT use formulaic corporate boilerplate such as:
+   - "rapid-response tactical package" or "annual comprehensive strategic partnership"
+   - "from rescue to reinvention" or "transforming crisis into visionary partnerships"
+   - "targeted interventions" or "build trust by delivering results amid challenges"
+   - "post-rescue analysis reveals areas ripe for strategic advancements"
+   - "seamless transition into ongoing partnership"
+   - "immediate resolution with clear actionable steps"
+   - "fixed-price clarity that assures no more unexpected costs"
+   - "if we don't act now we will lose everything" or "we need results now no fluff"
+2. BESPOKE ANIMAL ARCHETYPES: DO NOT repeat cliché animals (like generic Rabbits or Eagles unless given a truly sharp, distinctive angle). Choose original, evocative animal metaphors that deeply mirror the exact psychological posture of this specific buyer in this exact industry. Pull from the full breadth of the animal kingdom (e.g. Honey Badger, Manta Ray, Peregrine Falcon, Snow Leopard, Komodo Dragon, Timber Wolf, Black Panther, Mountain Goat, Rhino, Barn Owl, Electric Eel, Archerfish, Border Collie, Sledge Husky, Hammerhead, Dragonfly, Meerkat, Beaver, Hedgehog, Chameleon, Pack Mule, Hermit Crab, Orca, Cheetah, Dolphin, Stallion, Elephant, Phoenix, Lion, Tiger).
+3. DOMAIN-DEEP VOCABULARY & DETAIL: Embed the exact technical terms, tools, operational realities, metrics, and stakes provided in the user's business overview and ICP. Every single pain point, quote, and deliverable must feel authentic to this exact industry.
+4. AUTHENTIC EXECUTIVE QUOTES: In the "language" field, generate 4 raw, candid quotes that sound like real people speaking behind closed doors under genuine stress or bold ambition.
+5. BESPOKE OFFER ARCHITECTURE: In the "bridge" section, name concrete, branded packages (e.g. for event production: "48-Hour Technical Triage & Cue Recovery Sprint", "12-Month Flagship Summit Retainer").
+6. Strictly return valid JSON conforming to the requested schema.`;
 
   const userPrompt = `BUSINESS OVERVIEW:
 ${intro}
@@ -495,7 +512,9 @@ HOW YOU HELP BOTH (BRIDGE METHOD):
 ${both || "(Propose a compelling strategic 2-speed method to transition rescue clients into long-term retainer partners)"}
 
 CREATIVE VARIATION DIRECTIVE:
-Generate two fresh, highly original, deeply differentiated customer personas (one Lifeboat in crisis, one Yacht in high ambition) with a strategic bridge offer. Ensure rich creative variation in animal metaphor, quotes, and tactical steps. Reply strictly with valid JSON matching this schema:
+${selectedLens}
+[VARIATION NONCE: ${variationNonce}]
+Generate two fresh, highly original, deeply differentiated customer personas (one Lifeboat in crisis, one Yacht in high ambition) with a strategic bridge offer tailored specifically to this business. Avoid repetitive templates or generic corporate filler. Reply strictly with valid JSON matching this schema:
 ${JSON_PROMPT_SHAPE}`;
 
   try {

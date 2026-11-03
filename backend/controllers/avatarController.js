@@ -43,24 +43,28 @@ exports.generate = async (req, res) => {
       both: (both || '').trim(),
     };
 
-    // Check if an avatar was already generated for these same inputs (same input = same result)
+    const isRegenerate = Boolean(req.body?.regenerate || req.query?.regenerate);
+
+    // Check if an avatar was already generated for these same inputs (same input = same result, unless regenerate requested)
     let existingRecord = null;
-    if (getStatus()) {
-      const userFilter = req.user ? { user: req.user._id } : {};
-      const candidates = await Avatar.find(userFilter).sort({ createdAt: -1 });
-      existingRecord = candidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
-      if (!existingRecord && !req.user) {
-        const allCandidates = await Avatar.find({}).sort({ createdAt: -1 }).limit(50);
-        existingRecord = allCandidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
-      }
-    } else {
-      const userId = req.user ? req.user._id?.toString() : null;
-      existingRecord = memoryStore.find(c => {
-        const matchUser = !userId || (c.user && c.user.toString() === userId);
-        return matchUser && areInputsIdentical(c.inputs, cleanInputs);
-      });
-      if (!existingRecord && !userId) {
-        existingRecord = memoryStore.find(c => areInputsIdentical(c.inputs, cleanInputs));
+    if (!isRegenerate) {
+      if (getStatus()) {
+        const userFilter = req.user ? { user: req.user._id } : {};
+        const candidates = await Avatar.find(userFilter).sort({ createdAt: -1 });
+        existingRecord = candidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
+        if (!existingRecord && !req.user) {
+          const allCandidates = await Avatar.find({}).sort({ createdAt: -1 }).limit(50);
+          existingRecord = allCandidates.find(c => areInputsIdentical(c.inputs, cleanInputs));
+        }
+      } else {
+        const userId = req.user ? req.user._id?.toString() : null;
+        existingRecord = memoryStore.find(c => {
+          const matchUser = !userId || (c.user && c.user.toString() === userId);
+          return matchUser && areInputsIdentical(c.inputs, cleanInputs);
+        });
+        if (!existingRecord && !userId) {
+          existingRecord = memoryStore.find(c => areInputsIdentical(c.inputs, cleanInputs));
+        }
       }
     }
 

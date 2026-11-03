@@ -45,14 +45,20 @@ export async function generateAvatarApi(inputs) {
   } catch (err) {
     console.warn('API generate failed or backend offline. Falling back to dynamic persona engine:', err);
 
-    // Check offline input cache so identical inputs return the identical fallback
+    // Check offline input cache so identical inputs return the identical fallback (bypassed if regenerating)
     const offlineFingerprint = 'cac-cached-' + Object.values(inputs).map(s => (s || '').trim()).join('|||');
-    try {
-      const cached = localStorage.getItem(offlineFingerprint);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {}
+    if (!inputs.regenerate) {
+      try {
+        const cached = localStorage.getItem(offlineFingerprint);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem(offlineFingerprint);
+      } catch {}
+    }
 
     // Heuristic client fallback derived dynamically from user inputs using multi-archetype variety
     const brandName = (inputs.intro.match(/^([A-Z0-9a-z\s]+?)(?:\s+(?:is|provides|helps|offers|creates)|\b)/i) || [])[1] || 'Your business';
@@ -169,16 +175,16 @@ export async function generateAvatarApi(inputs) {
         ]
       },
       bridge: {
-        headline: `From Urgent Rescue to Strategic Elevation with ${brandName}`,
-        lifeboatOffer: "Rapid Rescue Sprint: Immediate fixed-scope triage and guaranteed delivery for critical deadlines.",
-        yachtOffer: "Strategic Flagship Retainer: An annual partnership providing continuous concept innovation and executive production.",
+        headline: `From ${lifeSplit[0]?.slice(0, 45) || 'Urgent Rescue'} to ${yachtSplit[0]?.slice(0, 45) || 'Category Leadership'} with ${brandName}`,
+        lifeboatOffer: `${brandName} Rapid Rescue Sprint: Immediate fixed-scope triage tackling "${lifeSplit[0]?.slice(0, 60) || 'urgent delivery risks'}" in 48–72 hours.`,
+        yachtOffer: `${brandName} Strategic Flagship Retainer: An annual partnership driving "${yachtSplit[0]?.slice(0, 60) || 'category-defining innovation'}".`,
         journey: [
-          { tag: "Entry", text: "Client enters with an urgent rescue problem requiring immediate stabilization." },
-          { tag: "Proof", text: "Flawless execution under fire earns complete executive trust." },
-          { tag: "Upgrade", text: "A post-project review reveals strategic opportunities for the year ahead." },
-          { tag: "Retainer", text: "The relationship upgrades to an annual strategic retainer driving category dominance." }
+          { tag: "Entry", text: `Client enters with critical pressure: "${lifeSplit[0]?.slice(0, 75) || 'urgent operational bottleneck'}", requiring immediate intervention.` },
+          { tag: "Proof", text: `Rapid execution under fire resolves "${lifeSplit[1]?.slice(0, 75) || 'the emergency'}", building deep executive trust.` },
+          { tag: "Upgrade", text: `A strategic debrief reveals high-altitude opportunities to address "${yachtSplit[0]?.slice(0, 75) || 'long-term market positioning'}".` },
+          { tag: "Retainer", text: `The relationship expands into an annual strategic partnership achieving "${yachtSplit[1]?.slice(0, 75) || 'uncontested category status'}".` }
         ],
-        message: `${brandName} meets you where you are — rescuing you in the storm and navigating you to the horizon.`
+        message: `${brandName} anchors you through the immediate storm and propels you into market leadership.`
       }
     };
 

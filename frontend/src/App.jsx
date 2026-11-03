@@ -271,6 +271,9 @@ function MainApp() {
               <ResultPage
                 data={data}
                 inputs={inputs}
+                setData={setData}
+                setLastGeneratedInputs={setLastGeneratedInputs}
+                onRefreshSaved={loadSavedList}
               />
             </ProtectedRoute>
           }

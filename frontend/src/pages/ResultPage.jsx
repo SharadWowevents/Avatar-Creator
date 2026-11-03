@@ -4,16 +4,52 @@ import { useAuth } from '../context/AuthContext';
 import AvatarCard from '../components/AvatarCard';
 import BridgeCard from '../components/BridgeCard';
 import { exportToPdf } from '../utils/pdfExport';
-import { sendAvatarEmailApi, downloadAvatarPdfApi } from '../api/avatarApi';
+import { sendAvatarEmailApi, downloadAvatarPdfApi, generateAvatarApi } from '../api/avatarApi';
 
-export default function ResultPage({ data, inputs }) {
+export default function ResultPage({ data, inputs, setData, setLastGeneratedInputs, onRefreshSaved }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tab, setTab] = useState('lifeboat');
   const [downloading, setDownloading] = useState(false);
   const [emailing, setEmailing] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('normal');
+
+  const handleRegenerate = async () => {
+    if (!inputs || regenerating) return;
+    try {
+      setRegenerating(true);
+      setStatus('Generating fresh, deeply differentiated creative variation…');
+      setStatusType('normal');
+      const newResult = await generateAvatarApi({ ...inputs, regenerate: true });
+      if (setData) {
+        setData(newResult);
+      }
+      if (setLastGeneratedInputs) {
+        setLastGeneratedInputs(inputs);
+      }
+      try {
+        const currentUserId = user?._id || user?.id;
+        const outKey = currentUserId ? `cac-output_${currentUserId}` : 'cac-output';
+        const inKey = currentUserId ? `cac-last-inputs_${currentUserId}` : 'cac-last-inputs';
+        localStorage.setItem(outKey, JSON.stringify(newResult));
+        localStorage.setItem(inKey, JSON.stringify(inputs));
+      } catch {}
+      if (onRefreshSaved) {
+        onRefreshSaved();
+      }
+      setStatus('✓ Brand-new creative variation generated successfully!');
+      setStatusType('success');
+      setTimeout(() => setStatus(''), 5000);
+    } catch (err) {
+      console.error('Regenerate error:', err);
+      setStatus('Failed to generate new variation: ' + (err.message || ''));
+      setStatusType('error');
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   const handleSendEmail = async () => {
     if (!data || emailing) return;
@@ -93,6 +129,28 @@ export default function ResultPage({ data, inputs }) {
             title="Return to input page to edit prompts"
           >
             ← Edit Inputs
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            style={{
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#f0fdf4',
+              color: '#15803d',
+              border: '1px solid #bbf7d0',
+              padding: '6px 12px',
+              fontSize: '13px',
+              borderRadius: '6px',
+              cursor: regenerating ? 'not-allowed' : 'pointer'
+            }}
+            title="Generate a fresh, highly differentiated customer persona angle"
+          >
+            {regenerating ? '🔄 Creating Variation…' : '🔄 New Variation'}
           </button>
 
           {/* Tabs */}
